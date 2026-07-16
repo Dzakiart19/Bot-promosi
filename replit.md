@@ -21,6 +21,7 @@ Bot otomatis Node.js yang berjalan secara paralel di 6 platform: OpenTalk, Yappi
 | DuckChat | 3004 | DuckChat Bot |
 | X Bot | 3005 | X Bot |
 | Telegram | 3000 | Telegram Bot |
+| TemanID | 3006 | TemanID Bot |
 
 ## Environment Variables (Secrets)
 

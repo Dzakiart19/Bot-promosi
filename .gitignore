@@ -1,3 +1,4 @@
 *.zip
 .telegram_session
 .temanid_session
+lib/platforms/x/.replied-ids.json
