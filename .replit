@@ -46,6 +46,10 @@ args = "Telegram Bot"
 task = "workflow.run"
 args = "TemanID Bot"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "RandomPacar Bot"
+
 [[workflows.workflow]]
 name = "OpenTalk Bot"
 author = "agent"
@@ -141,6 +145,18 @@ args = "PORT=3006 node bot/temanid-bot.js"
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "RandomPacar Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=3007 node bot/randompacar-bot.js"
+waitForPort = 3007
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 3000
 externalPort = 80
@@ -168,6 +184,10 @@ externalPort = 3005
 [[ports]]
 localPort = 3006
 externalPort = 3000
+
+[[ports]]
+localPort = 3007
+externalPort = 5173
 
 [[ports]]
 localPort = 4200

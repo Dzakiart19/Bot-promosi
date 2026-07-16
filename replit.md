@@ -22,6 +22,7 @@ Bot otomatis Node.js yang berjalan secara paralel di 6 platform: OpenTalk, Yappi
 | X Bot | 3005 | X Bot |
 | Telegram | 3000 | Telegram Bot |
 | TemanID | 3006 | TemanID Bot |
+| RandomPacar | 3007 | RandomPacar Bot |
 
 ## Environment Variables (Secrets)
 
