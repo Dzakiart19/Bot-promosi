@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Multi-Platform Bot — Monitor</title>
+<style>
+  :root {
+    --bg:       #0d0f14;
+    --surface:  #151820;
+    --border:   #1e2330;
+    --accent:   #7d31ff;
+    --accent2:  #00d4ff;
+    --green:    #00e676;
+    --yellow:   #ffd740;
+    --red:      #ff5252;
+    --orange:   #ff9100;
+    --text:     #e8eaf0;
+    --muted:    #6b7280;
+    --radius:   12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  /* ── GLOBAL HEADER ── */
+  .global-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .global-header-left { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 22px; height: 22px; }
+  .global-header h1 { font-size: 1.4rem; font-weight: 700; }
+  .global-header h1 span { color: var(--accent); }
+  .global-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  .global-refresh { font-size: 0.78rem; color: var(--muted); }
+
+  /* ── PLATFORMS CONTAINER ── */
+  .platforms {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+    gap: 22px;
+  }
+
+  /* ── PLATFORM BLOCK ── */
+  .platform-block {
+    background: rgba(255,255,255,0.015);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+  }
+  .platform-block.offline { opacity: 0.55; }
+
+  .platform-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .platform-title { display: flex; align-items: center; gap: 10px; }
+  .platform-title h2 { font-size: 1.05rem; font-weight: 700; }
+  .platform-port { font-size: 0.7rem; color: var(--muted); font-family: monospace; }
+
+  .status-badge {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.4s;
+    flex-shrink: 0;
+  }
+  .status-dot.searching { background: var(--yellow); animation: pulse 1.2s infinite; }
+  .status-dot.matched   { background: var(--green);  animation: pulse 0.6s infinite; }
+  .status-dot.ok        { background: var(--green); }
+  .status-dot.error     { background: var(--red); }
+  .status-dot.warn      { background: var(--orange); animation: pulse 1.8s infinite; }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; } 50% { opacity:0.3; }
+  }
+
+  .uptime-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .uptime-pill b { color: var(--text); font-weight: 600; }
+
+  /* ── GRID STAT CARDS ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-card .label {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .stat-card .value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-card.accent-green  .value { background: linear-gradient(135deg,#fff,var(--green));  -webkit-background-clip:text; }
+  .stat-card.accent-yellow .value { background: linear-gradient(135deg,#fff,var(--yellow)); -webkit-background-clip:text; }
+  .stat-card.accent-red    .value { background: linear-gradient(135deg,#fff,var(--red));    -webkit-background-clip:text; }
+  .stat-card.accent-orange .value { background: linear-gradient(135deg,#fff,var(--orange)); -webkit-background-clip:text; }
+
+  /* ── BOTTOM GRID (per-platform) ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-header h3 {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .panel-body { padding: 12px 14px; }
+
+  /* ── ACTIVITY FEED ── */
+  .feed {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .feed-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 7px 9px;
+    border-radius: 8px;
+    background: var(--bg);
+    font-size: 0.78rem;
+  }
+  .feed-icon {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .feed-icon svg { width: 11px; height: 11px; }
+
+  .feed-icon.match       { background: rgba(0,230,118,.12);  color: var(--green); }
+  .feed-icon.send        { background: rgba(125,49,255,.12); color: var(--accent); }
+  .feed-icon.reply       { background: rgba(0,212,255,.12);  color: var(--accent2); }
+  .feed-icon.error       { background: rgba(255,82,82,.12);  color: var(--red); }
+  .feed-icon.blocked     { background: rgba(255,145,0,.12);  color: var(--orange); }
+  .feed-icon.priority    { background: rgba(0,230,118,.18);  color: var(--green); }
+  .feed-icon.warn        { background: rgba(255,215,64,.12); color: var(--yellow); }
+  .feed-icon.search      { background: rgba(107,114,128,.12);color: var(--muted); }
+  .feed-icon.new_session { background: rgba(125,49,255,.12); color: var(--accent); }
+  .feed-icon.end_session { background: rgba(107,114,128,.12);color: var(--muted); }
+  .feed-icon.default     { background: rgba(107,114,128,.08);color: var(--muted); }
+
+  .feed-content { flex: 1; min-width: 0; }
+  .feed-msg { color: var(--text); word-break: break-word; line-height: 1.35; }
+  .feed-time { color: var(--muted); font-size: 0.68rem; margin-top: 2px; }
+
+  /* ── INFO PANEL ── */
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .key   { color: var(--muted); }
+  .info-row .val   { color: var(--text); font-weight: 600; text-align: right; max-width: 60%; word-break: break-all; }
+  .info-row .val.ok     { color: var(--green); }
+  .info-row .val.error  { color: var(--red); }
+
+  .health-url {
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--accent2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    user-select: all;
+  }
+  .health-url:hover { border-color: var(--accent2); }
+  .copy-btn {
+    background: var(--border);
+    border: none;
+    border-radius: 5px;
+    color: var(--muted);
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 0.68rem;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover { background: var(--accent); color: #fff; }
+
+  .offline-note {
+    text-align: center;
+    padding: 30px 10px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* ── AUTH INLINE CARD ── */
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid rgba(255,145,0,.3);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .auth-steps { display:flex; gap:8px; margin-bottom:18px; }
+  .auth-step-dot { flex:1; height:3px; border-radius:2px; background:var(--border); }
+  .auth-step-dot.active { background:var(--orange); }
+  .auth-step-dot.done   { background:var(--green); }
+
+  .auth-btn {
+    width:100%; padding:11px; border:none; border-radius:8px;
+    font-size:.9rem; font-weight:700; cursor:pointer; margin-top:6px;
+    transition: opacity .15s;
+  }
+  .auth-btn:disabled { opacity:.5; cursor:not-allowed; }
+  .auth-btn.primary  { background:var(--orange); color:#000; }
+  .auth-btn.green    { background:var(--green);  color:#000; }
+  .auth-btn.ghost    { background:var(--border); color:var(--text); margin-top:8px; }
+  .auth-input {
+    width:100%; padding:10px 13px; background:var(--bg);
+    border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-size:1rem; margin-top:6px; margin-bottom:2px;
+  }
+  .auth-input:focus { outline:none; border-color:var(--orange); }
+  .auth-error { color:var(--red); font-size:.8rem; margin-top:6px; padding:8px 10px; background:rgba(255,82,82,.08); border-radius:6px; }
+  .auth-hint  { color:var(--muted); font-size:.78rem; margin-top:10px; line-height:1.5; }
+  .auth-hint code { color:var(--accent2); }
+  .session-box {
+    background:var(--bg); border:1px solid var(--accent2); border-radius:8px;
+    padding:12px; font-family:monospace; font-size:.72rem; color:var(--accent2);
+    word-break:break-all; max-height:100px; overflow-y:auto; margin-top:8px; margin-bottom:10px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  /* ── REFRESH BAR ── */
+  .refresh-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%;
+    transition: width 2s linear;
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+
+<div class="refresh-bar" id="bar"></div>
+
+<!-- GLOBAL HEADER -->
+<div class="global-header">
+  <div class="global-header-left">
+    <div class="logo-icon">
+      <svg viewBox="0 0 22 22" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="18" height="14" rx="3"/>
+        <path d="M6 9l3 3-3 3"/>
+        <path d="M12 15h4"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Multi-<span>Platform</span> Bot Monitor</h1>
+      <div class="global-sub" id="platformCount">Memuat platform...</div>
+    </div>
+  </div>
+  <div class="global-refresh">Auto-refresh setiap 2 detik &nbsp;·&nbsp; <span id="lastRefresh">—</span></div>
+</div>
+
+<!-- PLATFORMS -->
+<div class="platforms" id="platforms">
+  <div class="offline-note">Memuat data platform...</div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  Dashboard ini menampilkan semua platform yang terdaftar di <code>lib/core/platforms-registry.js</code>.
+  Tambah platform baru cukup tambah satu baris di file itu — dashboard otomatis menampilkannya.
+</div>
+
+<script>
+/* ── Monochrome SVG icon strings ── */
+const SVG = {
+  match: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4-4-1.8-4-4z"/><path d="M4 6l1.5 1.5L8 4.5"/></svg>`,
+  priority: `<svg viewBox="0 0 12 12" fill="currentColor" stroke="none"><path d="M6 0.5l1.4 3.7 3.9 0.3-3 2.6 0.9 3.9L6 9l-3.2 2 0.9-3.9-3-2.6 3.9-0.3z"/></svg>`,
+  send: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 1.5L1 4.5l4 2 2 4 3.5-9.5z"/><line x1="5" y1="6.5" x2="8" y2="3.5"/></svg>`,
+  reply: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2h7a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H5l-2.5 2v-2h-1a0 0 0 0 1 0 0v-4a0 0 0 0 1 0 0z"/></svg>`,
+  error: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="4.5"/><line x1="4.5" y1="4.5" x2="7.5" y2="7.5"/><line x1="7.5" y1="4.5" x2="4.5" y2="7.5"/></svg>`,
+  blocked: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="4.5"/><line x1="2.8" y1="2.8" x2="9.2" y2="9.2"/></svg>`,
+  warn: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 1.5L11 10H1L6 1.5z"/><line x1="6" y1="5" x2="6" y2="7.5"/><circle cx="6" cy="9" r="0.4" fill="currentColor" stroke="none"/></svg>`,
+  search: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3.5"/><line x1="7.5" y1="7.5" x2="10.5" y2="10.5"/></svg>`,
+  new_session: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="4.5"/><line x1="6" y1="3.5" x2="6" y2="8.5"/><line x1="3.5" y1="6" x2="8.5" y2="6"/></svg>`,
+  end_session: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="7" height="7" rx="1.5"/></svg>`,
+  default: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="6" cy="6" r="4.5"/></svg>`,
+};
+
+const STATUS_MAP = {
+  starting:       ['ok',        'Starting'],
+  connecting:     ['searching', 'Connecting'],
+  authenticating: ['searching', 'Auth'],
+  searching:      ['searching', 'Mencari...'],
+  matched:        ['matched',   'Matched'],
+  idle:           ['ok',        'Idle'],
+  auth_required:  ['warn',      'Login Diperlukan'],
+  session_expired:['error',     'Sesi Expired'],
+};
+
+/* ── State autentikasi Telegram (persists across auto-refresh) ── */
+const tgAuth = {
+  step   : 'idle',  // idle | sending | otp_sent | verifying | need_2fa | verifying2fa | done | error
+  error  : '',
+  session: '',
+};
+
+async function tgSendOTP() {
+  tgAuth.step = 'sending'; tgAuth.error = ''; renderCurrentPlatforms();
+  try {
+    const r = await fetch('/api/telegram-auth/send-otp', { method: 'POST' });
+    const d = await r.json();
+    tgAuth.step  = d.ok ? 'otp_sent' : 'error';
+    tgAuth.error = d.ok ? '' : (d.error || 'Gagal kirim OTP');
+  } catch (e) { tgAuth.step = 'error'; tgAuth.error = e.message; }
+  renderCurrentPlatforms();
+}
+
+async function tgVerifyOTP() {
+  const code = (document.getElementById('tg-otp-input')?.value || '').trim();
+  if (!code) return;
+  tgAuth.step = 'verifying'; renderCurrentPlatforms();
+  try {
+    const r = await fetch('/api/telegram-auth/verify', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      tgAuth.step    = d.nextStep || 'done';
+      tgAuth.session = d.session  || '';
+      tgAuth.error   = '';
+    } else {
+      tgAuth.step = 'otp_sent'; tgAuth.error = d.error || 'Kode salah';
+    }
+  } catch (e) { tgAuth.step = 'otp_sent'; tgAuth.error = e.message; }
+  renderCurrentPlatforms();
+}
+
+async function tgVerify2FA() {
+  const pwd = (document.getElementById('tg-2fa-input')?.value || '').trim();
+  if (!pwd) return;
+  tgAuth.step = 'verifying2fa'; renderCurrentPlatforms();
+  try {
+    const r = await fetch('/api/telegram-auth/verify-2fa', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      tgAuth.step    = 'done';
+      tgAuth.session = d.session || '';
+      tgAuth.error   = '';
+    } else {
+      tgAuth.step = 'need_2fa'; tgAuth.error = d.error || 'Password salah';
+    }
+  } catch (e) { tgAuth.step = 'need_2fa'; tgAuth.error = e.message; }
+  renderCurrentPlatforms();
+}
+
+function tgCopySession() {
+  if (!tgAuth.session) return;
+  navigator.clipboard.writeText(tgAuth.session).then(() => {
+    const btn = document.getElementById('tg-copy-btn');
+    if (btn) { btn.textContent = '✓ Tersalin!'; setTimeout(() => { btn.textContent = '📋 Copy Session'; }, 2500); }
+  });
+}
+
+function fmtUptime(s) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}j ${m}m ${sec}d`;
+  if (m > 0) return `${m}m ${sec}d`;
+  return `${sec}d`;
+}
+
+function fmtTime(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleTimeString('id-ID');
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/** Konversi URL https:// di teks jadi <a> yang bisa diklik. */
+function linkify(s) {
+  return escHtml(s).replace(
+    /(https?:\/\/[^\s&]+)/g,
+    '<a href="$1" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:underline;word-break:break-all;">$1</a>'
+  );
+}
+
+function renderFeed(events) {
+  if (!events || !events.length) {
+    return '<div class="feed-item" style="justify-content:center;color:var(--muted)">Belum ada event</div>';
+  }
+  return events.slice(0, 12).map(e => {
+    const type = e.type || 'default';
+    const icon = SVG[type] || SVG.default;
+    return `<div class="feed-item">
+      <div class="feed-icon ${type}">${icon}</div>
+      <div class="feed-content">
+        <div class="feed-msg">${linkify(e.msg)}</div>
+        <div class="feed-time">${fmtTime(e.ts)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/** Panel riwayat comment/reply khusus X Bot (tampil kalau stats.sentLog ada). */
+function renderSentLog(sentLog) {
+  if (!sentLog || !sentLog.length) {
+    return `<div class="panel" style="grid-column:1/-1;">
+      <div class="panel-header"><h3>📋 Riwayat Terkirim (X Bot)</h3><span style="font-size:0.68rem;color:var(--muted)">Belum ada kiriman</span></div>
+      <div class="panel-body" style="color:var(--muted);font-size:0.8rem;padding:12px;">Bot belum mengirim comment atau reply sejak terakhir restart.</div>
+    </div>`;
+  }
+  const rows = sentLog.slice(0, 30).map(e => {
+    const badge = e.mode === 'comment'
+      ? `<span style="background:#1d4ed8;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.65rem;font-weight:700;">COMMENT</span>`
+      : `<span style="background:#6d28d9;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.65rem;font-weight:700;">REPLY</span>`;
+    const snippet = escHtml((e.targetText || '').slice(0, 80)) + (e.targetText && e.targetText.length > 80 ? '…' : '');
+    const targetLink = e.targetUrl
+      ? `<a href="${escHtml(e.targetUrl)}" target="_blank" rel="noopener" title="Lihat postingan target" style="color:var(--accent2);font-size:0.72rem;white-space:nowrap;">Target ↗</a>`
+      : '—';
+    const sentLink = e.sentUrl
+      ? `<a href="${escHtml(e.sentUrl)}" target="_blank" rel="noopener" title="Lihat kiriman bot" style="color:var(--green);font-size:0.72rem;white-space:nowrap;">Kiriman ↗</a>`
+      : '—';
+    return `<tr>
+      <td style="white-space:nowrap;padding:5px 8px;color:var(--muted);font-size:0.68rem;">${fmtTime(e.sentAt)}</td>
+      <td style="padding:5px 8px;">${badge}</td>
+      <td style="padding:5px 8px;font-size:0.75rem;color:var(--text);max-width:320px;">${snippet}</td>
+      <td style="padding:5px 8px;text-align:center;">${targetLink}</td>
+      <td style="padding:5px 8px;text-align:center;">${sentLink}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="panel" style="grid-column:1/-1;">
+    <div class="panel-header">
+      <h3>📋 Riwayat Terkirim (X Bot)</h3>
+      <span style="font-size:0.68rem;color:var(--muted)">${sentLog.length} entri · 30 terakhir ditampilkan</span>
+    </div>
+    <div class="panel-body" style="padding:0;overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:6px 8px;text-align:left;color:var(--muted);font-weight:500;font-size:0.68rem;">Waktu</th>
+            <th style="padding:6px 8px;text-align:left;color:var(--muted);font-weight:500;font-size:0.68rem;">Mode</th>
+            <th style="padding:6px 8px;text-align:left;color:var(--muted);font-weight:500;font-size:0.68rem;">Teks Postingan Target</th>
+            <th style="padding:6px 8px;text-align:center;color:var(--muted);font-weight:500;font-size:0.68rem;">Target</th>
+            <th style="padding:6px 8px;text-align:center;color:var(--muted);font-weight:500;font-size:0.68rem;">Kiriman Bot</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderPlatformAuthRequired(p) {
+  const s = tgAuth.step;
+  const busy = s === 'sending' || s === 'verifying' || s === 'verifying2fa';
+
+  // Step indicator: 3 dots (Kirim OTP / Kode / Selesai)
+  const dots = [
+    /* dot 1 */ (s === 'idle' || s === 'sending') ? 'active' : 'done',
+    /* dot 2 */ (s === 'otp_sent' || s === 'verifying' || s === 'need_2fa' || s === 'verifying2fa') ? 'active' : (s === 'done' ? 'done' : ''),
+    /* dot 3 */ s === 'done' ? 'done' : (s === 'need_2fa' || s === 'verifying2fa' ? 'active' : ''),
+  ];
+
+  let body = '';
+
+  if (s === 'idle' || s === 'sending') {
+    body = `
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px;">
+        Sesi belum diset. Kirim OTP ke <strong style="color:var(--text)">${escHtml(p.stats?.phone || '+62...')}</strong> untuk login.
+      </p>
+      <button class="auth-btn primary" onclick="tgSendOTP()" ${busy ? 'disabled' : ''}>
+        ${s === 'sending' ? '⏳ Mengirim OTP...' : '📲 Kirim OTP'}
+      </button>`;
+  } else if (s === 'otp_sent' || s === 'verifying') {
+    body = `
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:8px;">Masukkan kode OTP dari Telegram:</p>
+      <input id="tg-otp-input" class="auth-input" type="text" inputmode="numeric"
+        placeholder="5–6 digit kode OTP" maxlength="8"
+        onkeydown="if(event.key==='Enter')tgVerifyOTP()" />
+      <button class="auth-btn green" onclick="tgVerifyOTP()" ${busy ? 'disabled' : ''}>
+        ${s === 'verifying' ? '⏳ Memverifikasi...' : '✓ Verifikasi'}
+      </button>
+      <button class="auth-btn ghost" onclick="tgSendOTP()" ${busy ? 'disabled' : ''}>🔄 Kirim Ulang OTP</button>`;
+  } else if (s === 'need_2fa' || s === 'verifying2fa') {
+    body = `
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:8px;">Akun ini mengaktifkan 2FA. Masukkan password Telegram:</p>
+      <input id="tg-2fa-input" class="auth-input" type="password"
+        placeholder="Cloud password Telegram" 
+        onkeydown="if(event.key==='Enter')tgVerify2FA()" />
+      <button class="auth-btn green" onclick="tgVerify2FA()" ${s === 'verifying2fa' ? 'disabled' : ''}>
+        ${s === 'verifying2fa' ? '⏳ Memverifikasi...' : '✓ Verifikasi 2FA'}
+      </button>`;
+  } else if (s === 'done') {
+    body = `
+      <div style="color:var(--green);font-size:1rem;font-weight:700;margin-bottom:10px;">✅ Login berhasil!</div>
+      <div style="background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.25);border-radius:8px;padding:14px;font-size:.85rem;color:var(--muted);line-height:1.6;">
+        🤖 Bot Telegram sedang resume otomatis...<br>
+        <span style="color:var(--text)">Halaman ini akan otomatis menampilkan statistik bot dalam beberapa detik.</span>
+      </div>
+      <div class="auth-hint" style="margin-top:10px;">Session disimpan otomatis — tidak perlu copy-paste atau restart manual.</div>`;
+  }
+
+  const errHtml = tgAuth.error
+    ? `<div class="auth-error">⚠️ ${escHtml(tgAuth.error)}</div>`
+    : '';
+
+  return `<div class="platform-block" id="block-${p.key}">
+    <div class="platform-header">
+      <div class="platform-title">
+        <div class="status-badge"><div class="status-dot warn"></div><span>Login Diperlukan</span></div>
+        <h2>${escHtml(p.name)}</h2>
+      </div>
+      <span class="platform-port">port ${p.port}</span>
+    </div>
+    <div class="auth-card">
+      <div class="auth-steps">
+        <div class="auth-step-dot ${dots[0]}"></div>
+        <div class="auth-step-dot ${dots[1]}"></div>
+        <div class="auth-step-dot ${dots[2]}"></div>
+      </div>
+      ${body}
+      ${errHtml}
+    </div>
+  </div>`;
+}
+
+function renderPlatformOffline(p) {
+  return `<div class="platform-block offline" id="block-${p.key}">
+    <div class="platform-header">
+      <div class="platform-title">
+        <div class="status-badge"><div class="status-dot error"></div><span>Offline</span></div>
+        <h2>${escHtml(p.name)}</h2>
+      </div>
+      <span class="platform-port">port ${p.port}</span>
+    </div>
+    <div class="offline-note">Bot tidak merespons — workflow mungkin belum dijalankan.</div>
+  </div>`;
+}
+
+function renderPlatformOnline(p) {
+  const d = p.stats;
+  // Deteksi platform yang butuh autentikasi — tampilkan UI login inline
+  if (d.status === 'auth_required' || d.status === 'session_expired') {
+    return renderPlatformAuthRequired(p);
+  }
+  const [cls, label] = STATUS_MAP[d.status] || ['ok', d.status || '—'];
+  const rate = d.totalMsgSent > 0 ? ((d.totalReplies / d.totalMsgSent) * 100).toFixed(1) + '%' : '—';
+  const healthUrl = window.location.origin + '/proxy/' + p.key + '/health';
+
+  return `<div class="platform-block" id="block-${p.key}">
+    <div class="platform-header">
+      <div class="platform-title">
+        <div class="status-badge"><div class="status-dot ${cls}"></div><span>${escHtml(label)}</span></div>
+        <h2>${escHtml(p.name)}</h2>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="platform-port">port ${p.port}</span>
+        <div class="uptime-pill">Uptime: <b>${fmtUptime(d.uptimeSeconds)}</b></div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">Sesi</div><div class="value">${d.totalSessions}</div></div>
+      <div class="stat-card accent-green"><div class="label">Match</div><div class="value">${d.totalMatches}</div></div>
+      <div class="stat-card"><div class="label">Terkirim</div><div class="value">${d.totalMsgSent}</div></div>
+      <div class="stat-card accent-green"><div class="label">Balasan</div><div class="value">${d.totalReplies}</div></div>
+      <div class="stat-card accent-red"><div class="label">Error</div><div class="value">${d.totalErrors}</div></div>
+      <div class="stat-card accent-orange"><div class="label">Diblokir</div><div class="value">${d.totalBlocked}</div></div>
+      <div class="stat-card accent-yellow"><div class="label">No Match</div><div class="value">${d.totalNoMatch}</div></div>
+      <div class="stat-card accent-yellow"><div class="label">No Reply</div><div class="value">${d.totalNoReply}</div></div>
+      <div class="stat-card accent-orange"><div class="label">Filter Negara</div><div class="value">${d.totalFiltered || 0}</div></div>
+      <div class="stat-card accent-green"><div class="label">⭐ Prioritas</div><div class="value">${d.totalPriority || 0}</div></div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="panel">
+        <div class="panel-header"><h3>Activity Feed</h3><span style="font-size:0.68rem;color:var(--muted)">12 terakhir</span></div>
+        <div class="panel-body"><div class="feed">${renderFeed(d.recentEvents)}</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h3>Info & Health</h3></div>
+        <div class="panel-body">
+          <div class="info-row"><span class="key">Sesi sekarang</span><span class="val">#${d.currentSession}</span></div>
+          <div class="info-row"><span class="key">Match terakhir</span><span class="val">${fmtTime(d.lastMatchAt)}</span></div>
+          <div class="info-row"><span class="key">Balasan terakhir</span><span class="val">${fmtTime(d.lastReplyAt)}</span></div>
+          <div class="info-row"><span class="key">Reply rate</span><span class="val">${rate}</span></div>
+          <div class="info-row"><span class="key">Error terakhir</span><span class="val ${d.lastErrorMsg ? 'error' : 'ok'}">${d.lastErrorMsg ? escHtml(d.lastErrorMsg.slice(0,40)) : 'Tidak ada'}</span></div>
+          <div class="health-url" onclick="copyHealth('${p.key}')" style="margin-top:10px;">
+            <span id="healthUrlText-${p.key}">${healthUrl}</span>
+            <button class="copy-btn" id="copyBtn-${p.key}">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${d.sentLog !== undefined ? `<div class="bottom-grid" style="margin-top:0;">${renderSentLog(d.sentLog)}</div>` : ''}
+  </div>`;
+}
+
+let currentPlatforms = [];
+
+async function fetchStats() {
+  try {
+    const r = await fetch('/api/stats/all');
+    const d = await r.json();
+    currentPlatforms = d.platforms || [];
+    renderAll(currentPlatforms);
+    document.getElementById('lastRefresh').textContent =
+      'Refresh: ' + new Date().toLocaleTimeString('id-ID');
+  } catch (e) {
+    document.getElementById('platforms').innerHTML =
+      '<div class="offline-note">Gagal memuat data — dashboard server tidak merespons.</div>';
+  }
+}
+
+/** Re-render dari data terakhir — dipakai saat state auth berubah tanpa menunggu interval. */
+function renderCurrentPlatforms() {
+  if (currentPlatforms.length) renderAll(currentPlatforms);
+}
+
+function renderAll(platforms) {
+  const online = platforms.filter(p => p.online).length;
+  document.getElementById('platformCount').textContent =
+    `${online}/${platforms.length} platform online`;
+
+  const container = document.getElementById('platforms');
+  container.innerHTML = platforms.map(p => p.online ? renderPlatformOnline(p) : renderPlatformOffline(p)).join('');
+}
+
+function copyHealth(key) {
+  const url = document.getElementById('healthUrlText-' + key).textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copyBtn-' + key);
+    btn.textContent = 'Copied';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  });
+}
+
+function animateBar() {
+  const bar = document.getElementById('bar');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  setTimeout(() => {
+    bar.style.transition = 'width 2s linear';
+    bar.style.width = '100%';
+  }, 50);
+}
+
+fetchStats();
+animateBar();
+setInterval(() => { fetchStats(); animateBar(); }, 5000);
+</script>
+</body>
+</html>

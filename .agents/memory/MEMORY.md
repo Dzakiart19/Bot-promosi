@@ -1,0 +1,8 @@
+- [Multi-platform bot dashboard](multi-platform-dashboard.md) — satu dashboard menampilkan semua bot lewat proxy localhost + registry, bukan satu dashboard per platform.
+- [Deployment single run command](deployment-single-run-command.md) — publish hanya jalankan 1 command; pakai launcher start-all.js + deploymentTarget vm untuk jalankan semua bot.
+- [iMeetzu PoW fallback flow](imeetzu-pow-fallback.md) — text.servsig.com issues tokens via solvable SHA-256 PoW when Turnstile JS isn't run; legitimate site fallback, not a bypass.
+- [platforms-registry.js is cached in-process](platforms-registry-reload.md) — editing it needs a restart of ALL bot workflows (not just the new one) or /api/stats/all won't show the new platform.
+- [Ban/rate-limit backoff untuk polling bot](ban-backoff-polling-bot.md) — pasang exponential backoff begitu sesi kena ban berturut-turut, jangan retry di jeda tetap.
+- [Country data availability per platform](country-data-availability.md) — hanya OpenTalk & Chatib expose negara partner di protokol; Yapping/SillyChat/DuckChat tidak (per recon 2026-07-12).
+- [X GraphQL anti-bot requirements](x-graphql-anti-bot.md) — X GraphQL butuh header x-client-transaction-id (404 tanpa itu meski cookie valid); endpoint verify REST lama sudah mati.
+- [X HomeTimeline GraphQL tidak tersedia tanpa browser](x-home-timeline-broken.md) — HomeTimeline/HomeLatestTimeline tidak ada di bundle statis; workaround: SearchTimeline + COMMENT_KEYWORDS.
