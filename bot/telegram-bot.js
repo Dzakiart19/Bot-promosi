@@ -27,6 +27,7 @@ const {
   startAuthServer,
   requireReauth,
   setBotRunning,
+  consumeLogoutRequest,
 }                                = require("../lib/platforms/telegram/auth-server");
 
 // ── Error codes Telegram yang berarti sesi tidak valid ────────────────────────
@@ -133,6 +134,14 @@ async function runBot(sessionStr) {
   // ── Loop utama ──────────────────────────────────────────────────────────────
   try {
     while (true) {
+      // Cek sinyal logout — berhenti agar outer loop bisa re-auth
+      if (consumeLogoutRequest()) {
+        log("INFO", "[BOT] Sinyal logout diterima — berhenti untuk login ulang...");
+        const e = new Error("Logout manual oleh pengguna");
+        e.isSessionExpired = true;
+        throw e;
+      }
+
       stats.totalSessions++;
       stats.currentSession = stats.totalSessions;
 
@@ -227,7 +236,7 @@ async function main() {
     } catch (err) {
       if (err.isSessionExpired) {
         log("ERROR", "═".repeat(52));
-        log("ERROR", "  SESSION KEDALUARSA");
+        log("ERROR", "  SESSION KEDALUARSA / LOGOUT");
         log("ERROR", "  Buka monitor → Telegram Bot → Kirim OTP");
         log("ERROR", "═".repeat(52));
 
@@ -235,12 +244,18 @@ async function main() {
         stats.lastErrorMsg = "Session expired — login ulang via monitor";
         pushEvent("error", "Session expired — buka monitor untuk login ulang");
 
+        // Re-read dari DB/file dulu — mungkin user sudah submit OTP saat bot masih running
         await clearSession();
-        session = await requireReauth("Session kedaluarsa — login ulang diperlukan");
-
-        // Simpan session baru sebelum run bot
-        await writeSession(session);
-        log("SUCCESS", "Re-auth selesai — bot resume...");
+        const freshSession = await readSession();
+        if (freshSession) {
+          log("SUCCESS", "Sesi baru ditemukan di DB (OTP sudah disubmit) — resume langsung...");
+          session = freshSession;
+        } else {
+          // Belum ada sesi baru — tunggu OTP dari dashboard
+          session = await requireReauth("Session kedaluarsa — login ulang diperlukan");
+          await writeSession(session);
+          log("SUCCESS", "Re-auth selesai — bot resume...");
+        }
 
       } else {
         // Telegram FloodWaitError: err.seconds berisi lama cooldown yang diharuskan.
