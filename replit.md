@@ -2,7 +2,7 @@
 
 ## Ringkasan Proyek
 
-Bot otomatis Node.js yang berjalan secara paralel di 6 platform: OpenTalk, Yapping, SillyChat, Chatib, DuckChat (chat anonim), ditambah X Bot (Twitter) dan Telegram Bot. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
+Bot otomatis Node.js yang berjalan secara paralel di 9 platform: OpenTalk, Yapping, SillyChat, Chatib, DuckChat (chat anonim), X Bot (Twitter), dan 3 Telegram Bot (1 akun, 3 target bot). Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
 
 ## Cara Menjalankan
 
@@ -62,11 +62,18 @@ lib/platforms/
   chatib/
   duckchat/
   telegram/
-    config.js       ← target bot, pesan promo, timing
-    session.js      ← persistent msg buffer + runSession (no race condition)
-    auth-server.js  ← web auth server + stats proxy (satu Express instance)
-    persistence.js  ← baca/tulis session via Replit DB + file fallback
+    config.js         ← target bot, pesan promo, timing
+    shared-session.js ← createMessageListener + runSession GENERIK (menerima cfg)
+    session.js        ← thin wrapper — bind cfg telegram ke shared-session
+    auth-server.js    ← web auth server + stats proxy (satu Express instance)
+    persistence.js    ← baca/tulis session via Replit DB + file fallback
     index.js
+  temanid/
+    session.js        ← thin wrapper — bind cfg temanid ke shared-session
+    persistence.js    ← re-export dari telegram/persistence (SAME DB KEY)
+  randompacar/
+    session.js        ← thin wrapper — bind cfg randompacar ke shared-session
+    persistence.js    ← re-export dari telegram/persistence (SAME DB KEY)
   x/
 bot/
   opentalk-bot.js
@@ -76,20 +83,101 @@ bot/
   duckchat-bot.js
   x-bot.js
   telegram-bot.js   ← main loop + auth/re-auth otomatis
+  temanid-bot.js    ← secondary Telegram bot (no auth UI)
+  randompacar-bot.js← secondary Telegram bot (no auth UI)
+  telegram-auth.js  ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
   start-all.js      ← launcher deployment
 public/
   monitor.html      ← dashboard monitor universal (auto-refresh 5 detik)
 ```
+
+---
+
+## ⚠️ ATURAN KRITIS — JANGAN DILANGGAR
+
+### Telegram: Satu Login, Semua Bot Jalan
+
+Ketiga bot Telegram (telegram-bot, temanid-bot, randompacar-bot) menggunakan **satu akun / satu session**. Session dikelola **sepenuhnya** oleh `bot/telegram-bot.js` (port 3000). Bot sekunder hanya membaca session yang sudah ada.
+
+**Konsekuensi arsitektur yang WAJIB diikuti:**
+
+| | `telegram-bot.js` (port 3000) | `temanid-bot.js` (port 3006) | `randompacar-bot.js` (port 3007) |
+|---|---|---|---|
+| Punya auth/OTP server | ✅ Ya (`auth-server.js`) | ❌ Tidak | ❌ Tidak |
+| `startServer()` | `startServer("Telegram Bot")` | `startServer("TemanID Bot", { authProxy: false })` | `startServer("RandomPacar Bot", { authProxy: false })` |
+| Dashboard tampil tombol OTP | ✅ Ya | ❌ Tidak — harus `authProxy: false` | ❌ Tidak — harus `authProxy: false` |
+| Bisa trigger login baru | ✅ Ya | ❌ Tidak | ❌ Tidak |
+
+**`authProxy: false` WAJIB** di temanid-bot dan randompacar-bot. Tanpa ini, dashboard port 3006/3007 akan menampilkan tombol OTP → user mengira setiap bot perlu login sendiri → konflik sesi.
+
+### `startServer()` — Opsi `authProxy`
+
+```js
+// ✅ BENAR: Telegram Bot — satu-satunya yang boleh expose auth UI
+startServer("Telegram Bot");                           // authProxy default: true
+
+// ✅ BENAR: Bot sekunder — stats saja, tanpa auth UI
+startServer("TemanID Bot",    { authProxy: false });
+startServer("RandomPacar Bot", { authProxy: false });
+
+// ❌ SALAH: Bot sekunder pakai startServer() tanpa authProxy: false
+startServer("TemanID Bot");   // ini akan munculkan tombol OTP di dashboard 3006!
+```
+
+### Session Sharing — Cara Kerjanya
+
+1. `telegram-bot.js` menulis session ke Replit DB (key: `telegram_session`) + file `.telegram_session`
+2. `temanid-bot.js` dan `randompacar-bot.js` **poll** sampai session tersedia, lalu baca dengan `readSession()`
+3. `lib/platforms/temanid/persistence.js` dan `lib/platforms/randompacar/persistence.js` keduanya **re-export** dari `lib/platforms/telegram/persistence.js` — satu DB key, tidak ada duplikasi
+4. Tiga GramJS `TelegramClient` berjalan simultan dengan session string yang sama — ini valid dan by design
+
+### `shared-session.js` — Satu Logika untuk Semua Telegram Bot
+
+Jangan copy-paste `runSession` atau `createMessageListener` ke session.js per-platform. Gunakan factory dari `lib/platforms/telegram/shared-session.js`:
+
+```js
+// Di session.js tiap platform:
+const cfg    = require("./config");
+const shared = require("../telegram/shared-session");
+const { createMessageListener, runSession } = shared.makeSession(cfg);
+module.exports = { createMessageListener, runSession };
+```
+
+Perbedaan antar bot hanya di config masing-masing (MATCH_SIGNALS, DELAY_SEND_MS, MSG, dll).
+
+### Telegram FloodWaitError
+
+GramJS melempar error dengan `err.seconds` saat kena rate limit. **Harus tunggu `err.seconds` detik**, bukan hardcode 5 detik:
+
+```js
+const waitSec = err.seconds || 0;
+if (waitSec > 0) {
+  await sleep(waitSec * 1000 + 1000); // +1s buffer
+} else {
+  await sleep(5000);
+}
+```
+
+Retry sebelum cooldown habis akan memperparah flood ban.
+
+### Jangan Refactor Kalau Tidak Tahu Bedanya
+
+`startStatsServer()` yang ada di bot sekunder terlihat seperti "duplikat" dari `startServer()` di `lib/core/server.js` — tapi **punya perbedaan penting**: tidak ada `/api/telegram-auth/:action`. Kalau diganti `startServer()` tanpa `{ authProxy: false }`, hasilnya UI auth muncul di semua port.
+
+**Prinsip:** sebelum menyatakan sesuatu "duplikat", pastikan kamu tahu persis apa bedanya — mungkin bedanya ada alasan.
+
+---
 
 ## Telegram Bot — Detail Alur
 
 ```
 /search
   → tunggu "Pasangan telah ditemukan" (timeout 90s → /search ulang)
-  → kirim promo LANGSUNG
-  → delay 5 detik (menghindari rate limit bot "Jangan terlalu cepat")
+  → delay DELAY_SEND_MS (temanid: 0ms langsung, telegram/randompacar: 3000ms)
+  → kirim promo acak dari MESSAGE_GREETS
+  → delay DELAY_NEXT_MS (5000ms)
   → /next
-  → [loop tanpa /search ulang — server otomatis carikan pasangan]
+  → [loop tanpa /search ulang — server otomatis carikan pasangan baru]
 ```
 
 Pesan lain di luar match-signal ("Jangan terlalu cepat", pesan PROMOTE, dll) diabaikan secara otomatis dalam loop tunggu match.
@@ -138,7 +226,18 @@ Partner dari negara berikut di-skip otomatis: India, Bangladesh, Pakistan, Nepal
 2. Buat `bot/<nama>-bot.js`
 3. Tambah baris ke `lib/core/platforms-registry.js`
 4. Buat workflow baru di Replit
-5. Restart SEMUA workflow (bukan hanya yang baru) — karena `platforms-registry.js` di-cache in-process
+5. Restart **SEMUA** workflow (bukan hanya yang baru) — karena `platforms-registry.js` di-cache in-process
+
+## Menambah Telegram Bot Sekunder Baru
+
+Kalau ingin tambah bot Telegram ke-4 (target bot lain, session sama):
+
+1. Buat `lib/platforms/<nama>/config.js` (TARGET_BOT, MATCH_SIGNALS, MESSAGE_GREETS, dll)
+2. Buat `lib/platforms/<nama>/persistence.js` — isinya cukup: `module.exports = require("../telegram/persistence");`
+3. Buat `lib/platforms/<nama>/session.js` — thin wrapper ke `shared-session.js`
+4. Buat `bot/<nama>-bot.js` — copy struktur temanid-bot.js, **WAJIB** `startServer(name, { authProxy: false })`
+5. Tambah ke `platforms-registry.js`
+6. Buat workflow baru
 
 ## User Preferences
 
@@ -146,3 +245,4 @@ Partner dari negara berikut di-skip otomatis: India, Bangladesh, Pakistan, Nepal
 - Nama event, variabel, konstanta: mengikuti konvensi platform target (hasil recon)
 - Setiap platform baru wajib didokumentasikan dengan komentar reverse-engineering di header file
 - Restart semua workflow setelah edit `platforms-registry.js`
+- Jangan asumsikan kode yang terlihat duplikat pasti bisa di-refactor — baca dulu bedanya
