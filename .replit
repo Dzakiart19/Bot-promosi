@@ -128,8 +128,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=3000 node bot/telegram-bot.js"
-waitForPort = 3000
+args = "PORT=4000 node bot/telegram-bot.js"
+waitForPort = 4000
 
 [workflows.workflow.metadata]
 outputType = "console"
@@ -190,6 +190,10 @@ localPort = 3007
 externalPort = 5173
 
 [[ports]]
+localPort = 4000
+externalPort = 4000
+
+[[ports]]
 localPort = 4200
 externalPort = 4200
 
@@ -202,7 +206,7 @@ localPort = 8000
 externalPort = 8000
 
 [deployment]
-deploymentTarget = "vm"
+deploymentTarget = "autoscale"
 run = ["node", "bot/start-all.js"]
 
 [userenv]
