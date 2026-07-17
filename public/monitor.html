@@ -429,6 +429,21 @@ async function tgVerifyOTP() {
   renderCurrentPlatforms();
 }
 
+async function tgLogout() {
+  if (!confirm('Yakin ingin logout dari Telegram?\n\nSesi akan dicabut dan semua bot Telegram berhenti sampai login ulang.')) return;
+  try {
+    const r = await fetch('/api/telegram-auth/logout', { method: 'POST' });
+    const d = await r.json();
+    if (d.ok) {
+      tgAuth.step = 'idle'; tgAuth.error = ''; tgAuth.session = '';
+      renderCurrentPlatforms();
+      setTimeout(fetchStats, 1500);
+    } else {
+      alert('Logout gagal: ' + (d.error || 'unknown'));
+    }
+  } catch (e) { alert('Logout error: ' + e.message); }
+}
+
 async function tgVerify2FA() {
   const pwd = (document.getElementById('tg-2fa-input')?.value || '').trim();
   if (!pwd) return;
@@ -658,6 +673,7 @@ function renderPlatformOnline(p) {
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="platform-port">port ${p.port}</span>
         <div class="uptime-pill">Uptime: <b>${fmtUptime(d.uptimeSeconds)}</b></div>
+        ${p.key === 'telegram' ? `<button onclick="tgLogout()" title="Logout & cabut sesi Telegram" style="background:rgba(255,82,82,.15);color:#ff5252;border:1px solid rgba(255,82,82,.3);border-radius:6px;padding:3px 10px;font-size:.72rem;cursor:pointer;white-space:nowrap;">⏏ Logout</button>` : ''}
       </div>
     </div>
 
