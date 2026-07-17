@@ -1,7 +1,0 @@
-*.zip
-.telegram_session
-.temanid_session
-lib/platforms/x/.replied-ids.json
-
-# Replit internal — berisi env vars plaintext, jangan di-commit
-.replit
