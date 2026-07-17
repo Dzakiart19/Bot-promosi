@@ -19,18 +19,12 @@
 
 const { TelegramClient }         = require("telegram");
 const { StringSession }          = require("telegram/sessions");
+const { startServer }            = require("../lib/core/server");
 const { log, sleep, C }          = require("../lib/core/logger");
 const { stats, pushEvent }       = require("../lib/core/stats");
 const { config, runSession, createMessageListener } = require("../lib/platforms/temanid");
 // Shared session — sama dengan Telegram Bot, satu akun satu login
 const { readSession }            = require("../lib/platforms/temanid/persistence");
-
-// Stats-only web server (tidak ada OTP endpoint)
-const express  = require("express");
-const path     = require("path");
-const REGISTRY = require("../lib/core/platforms-registry");
-const PORT     = process.env.PORT ? parseInt(process.env.PORT) : 3006;
-const PROXY_TIMEOUT_MS = 2500;
 
 const SESSION_EXPIRED_ERRORS = [
   "AUTH_KEY_UNREGISTERED",
@@ -49,6 +43,9 @@ if (!API_ID || !API_HASH) {
   process.exit(1);
 }
 
+// ── Start web server (monitoring + health + api/stats) ────────────────────────
+startServer("TemanID Bot");
+
 // ── Banner ────────────────────────────────────────────────────────────────────
 console.log(`${C.bold}${C.magenta}`);
 console.log("  ████████╗███████╗███╗   ███╗ █████╗ ███╗   ██╗██╗██████╗ ");
@@ -58,78 +55,6 @@ console.log("     ██║   ██╔══╝  ██║╚██╔╝██
 console.log("     ██║   ███████╗██║ ╚═╝ ██║██║  ██║██║ ╚████║██║██████╔╝");
 console.log("     ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝╚═════╝ ");
 console.log(`${C.reset}${C.magenta}  Platform : @${config.TARGET_BOT}${C.reset}\n`);
-
-// ── Stats-only Express server ─────────────────────────────────────────────────
-function startStatsServer() {
-  const app = express();
-  app.use(express.json());
-  app.use(express.static(path.join(__dirname, "../public")));
-
-  app.get("/", (_req, res) =>
-    res.sendFile(path.join(__dirname, "../public/monitor.html"))
-  );
-
-  app.get("/api/stats", (_req, res) => {
-    const s = stats;
-    if (s.platform) {
-      return res.json({ ...s, uptimeSeconds: Math.floor((Date.now() - s.startTime) / 1000) });
-    }
-    res.json({
-      platform      : "TemanID Bot",
-      status        : "waiting_session",
-      startTime     : Date.now(),
-      uptimeSeconds : 0,
-      totalSessions : 0,
-      totalMatches  : 0,
-      totalMsgSent  : 0,
-      totalErrors   : 0,
-    });
-  });
-
-  app.get("/health", (_req, res) =>
-    res.json({ status: stats.status || "waiting_session" })
-  );
-
-  async function fetchLocal(port, urlPath) {
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), PROXY_TIMEOUT_MS);
-    try {
-      const res = await fetch(`http://localhost:${port}${urlPath}`, { signal: ctrl.signal });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    } finally { clearTimeout(timer); }
-  }
-
-  app.get("/api/stats/all", async (_req, res) => {
-    const results = await Promise.all(
-      REGISTRY.map(async (entry) => {
-        try {
-          const data = await fetchLocal(entry.port, "/api/stats");
-          return { key: entry.key, name: entry.name, port: entry.port, online: true, stats: data };
-        } catch (err) {
-          return { key: entry.key, name: entry.name, port: entry.port, online: false, error: err.message };
-        }
-      })
-    );
-    res.json({ platforms: results });
-  });
-
-  app.get("/proxy/:key/health", async (req, res) => {
-    const entry = REGISTRY.find((p) => p.key === req.params.key);
-    if (!entry) return res.status(404).json({ status: "unknown_platform" });
-    try {
-      const data = await fetchLocal(entry.port, "/health");
-      res.json(data);
-    } catch (err) {
-      res.status(502).json({ status: "offline", error: err.message });
-    }
-  });
-
-  app.listen(PORT, "0.0.0.0", () => {
-    log("SUCCESS", `Web server → http://0.0.0.0:${PORT}`);
-    log("SUCCESS", `Stats      → http://0.0.0.0:${PORT}/api/stats`);
-  });
-}
 
 // ── makeClient ────────────────────────────────────────────────────────────────
 function makeClient(sessionStr) {
@@ -211,6 +136,7 @@ async function runBot(sessionStr) {
           await client.sendMessage(botEntity, { message: config.CMD_SEARCH });
           pushEvent("search", "Re-search setelah timeout");
         }
+        // reason "next-sent": /next sudah dikirim, server otomatis carikan pasangan baru
       } catch (err) {
         const code = err.errorMessage || err.message || "";
         if (SESSION_EXPIRED_ERRORS.some(e => code.includes(e))) {
@@ -254,8 +180,6 @@ async function runBot(sessionStr) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 async function main() {
-  startStatsServer();
-
   // Tunggu sampai session tersedia (ditulis oleh Telegram Bot saat OTP)
   let session = await readSession();
   if (!session) {
@@ -292,8 +216,14 @@ async function main() {
         log("SUCCESS", "Session baru ditemukan — resume...");
 
       } else {
-        log("ERROR", `runBot error: ${err.message}`);
-        await sleep(5000);
+        const waitSec = err.seconds || 0;
+        if (waitSec > 0) {
+          log("WARN", `Rate limit Telegram — tunggu ${waitSec}s sebelum retry...`);
+          await sleep(waitSec * 1000 + 1000);
+        } else {
+          log("ERROR", `runBot error: ${err.message}`);
+          await sleep(5000);
+        }
       }
     }
   }

@@ -243,8 +243,17 @@ async function main() {
         log("SUCCESS", "Re-auth selesai — bot resume...");
 
       } else {
-        log("ERROR", `runBot error: ${err.message}`);
-        await sleep(5000);
+        // Telegram FloodWaitError: err.seconds berisi lama cooldown yang diharuskan.
+        // Harus tunggu sesuai instruksi server, bukan retry cepat — kalau di-retry
+        // sebelum cooldown habis, counter flood wait server malah naik terus.
+        const waitSec = err.seconds || 0;
+        if (waitSec > 0) {
+          log("WARN", `Rate limit Telegram — tunggu ${waitSec}s sebelum retry...`);
+          await sleep(waitSec * 1000 + 1000); // +1s buffer
+        } else {
+          log("ERROR", `runBot error: ${err.message}`);
+          await sleep(5000);
+        }
       }
     }
   }

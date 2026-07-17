@@ -1,23 +1,29 @@
 /**
  * bot/telegram-auth.js
  * ─────────────────────────────────────────────────────────────────────────────
- * Script autentikasi SEKALI PAKAI — jalankan di Replit Shell:
+ * Script autentikasi MANUAL via terminal — FALLBACK SAJA.
+ *
+ * Cara normal (lebih mudah, tanpa shell):
+ *   1. Pastikan TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_PHONE sudah di Secrets
+ *   2. Start workflow "Telegram Bot"
+ *   3. Buka monitor dashboard → tab Telegram Bot → klik "Kirim OTP"
+ *   4. Masukkan kode → bot langsung jalan, session tersimpan otomatis ke Replit DB
+ *
+ * Gunakan script ini HANYA kalau dashboard tidak bisa diakses atau ada masalah
+ * dengan auth-server. Jalankan di Replit Shell:
  *
  *   node bot/telegram-auth.js
  *
  * Script akan:
  *   1. Kirim kode OTP ke nomor TELEGRAM_PHONE
- *   2. Prompt anda memasukkan kode
+ *   2. Prompt memasukkan kode
  *   3. Tampilkan TELEGRAM_SESSION string
+ *   4. Simpan session ke file .telegram_session (dibaca otomatis oleh semua bot)
  *
- * Setelah dapat session string:
- *   → Set sebagai secret TELEGRAM_SESSION di Replit (Secrets panel)
- *   → Jalankan workflow "Telegram Bot" seperti biasa
- *
- * Env vars yang dibutuhkan SEBELUM menjalankan:
- *   TELEGRAM_API_ID   = 26372402
- *   TELEGRAM_API_HASH = (set via Replit Secrets)
- *   TELEGRAM_PHONE    = +6285962694573
+ * Env vars yang dibutuhkan:
+ *   TELEGRAM_API_ID   — dari my.telegram.org
+ *   TELEGRAM_API_HASH — dari my.telegram.org (set via Replit Secrets)
+ *   TELEGRAM_PHONE    — nomor HP format internasional (+62...)
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -26,6 +32,8 @@
 const { TelegramClient } = require("telegram");
 const { StringSession }  = require("telegram/sessions");
 const readline           = require("readline");
+const fs                 = require("fs");
+const path               = require("path");
 
 const API_ID   = parseInt(process.env.TELEGRAM_API_ID  || "0", 10);
 const API_HASH = process.env.TELEGRAM_API_HASH || "";
@@ -51,10 +59,12 @@ function askQuestion(prompt) {
 }
 
 async function main() {
-  console.log("\n=== TELEGRAM AUTH ===");
+  console.log("\n=== TELEGRAM AUTH (manual fallback) ===");
   console.log(`Phone  : ${PHONE}`);
   console.log(`API ID : ${API_ID}`);
   console.log("Memulai autentikasi...\n");
+  console.log("CATATAN: Cara lebih mudah adalah via dashboard monitor (OTP di browser).");
+  console.log("         Gunakan script ini hanya jika dashboard tidak bisa diakses.\n");
 
   const client = new TelegramClient(
     new StringSession(""),
@@ -83,16 +93,24 @@ async function main() {
 
   const sessionString = client.session.save();
 
+  // Simpan ke file .telegram_session supaya dibaca otomatis oleh semua bot
+  const sessionFile = path.join(__dirname, "../.telegram_session");
+  try {
+    fs.writeFileSync(sessionFile, sessionString, "utf8");
+    console.log(`✓ Session disimpan ke ${sessionFile}`);
+    console.log("  Semua bot Telegram akan membacanya otomatis saat start.\n");
+  } catch (e) {
+    console.error("WARN: Gagal simpan ke file:", e.message);
+  }
+
   console.log("╔══════════════════════════════════════════════════════════════╗");
-  console.log("║  TELEGRAM_SESSION — COPY STRING INI SEPENUHNYA               ║");
+  console.log("║  TELEGRAM_SESSION — copy jika ingin simpan manual di Secrets ║");
   console.log("╚══════════════════════════════════════════════════════════════╝");
   console.log(sessionString);
   console.log("═".repeat(66));
   console.log("\n📋 Langkah selanjutnya:");
-  console.log("  1. Copy semua teks session di atas");
-  console.log("  2. Buka Replit → Tools → Secrets");
-  console.log("  3. Tambah secret baru: key = TELEGRAM_SESSION, value = (paste)");
-  console.log("  4. Start workflow 'Telegram Bot'\n");
+  console.log("  Start (atau restart) workflow 'Telegram Bot', 'TemanID Bot',");
+  console.log("  dan 'RandomPacar Bot' — semua otomatis baca session dari file.\n");
 
   await client.disconnect();
   process.exit(0);
