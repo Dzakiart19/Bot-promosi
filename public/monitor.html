@@ -673,7 +673,7 @@ function renderPlatformOnline(p) {
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="platform-port">port ${p.port}</span>
         <div class="uptime-pill">Uptime: <b>${fmtUptime(d.uptimeSeconds)}</b></div>
-        ${p.key === 'telegram' ? `<button onclick="tgLogout()" title="Logout & cabut sesi Telegram" style="background:rgba(255,82,82,.15);color:#ff5252;border:1px solid rgba(255,82,82,.3);border-radius:6px;padding:3px 10px;font-size:.72rem;cursor:pointer;white-space:nowrap;">⏏ Logout</button>` : ''}
+        ${['telegram','temanid','randompacar'].includes(p.key) ? `<button onclick="tgLogout()" title="Logout & cabut sesi Telegram (berlaku untuk semua bot Telegram)" style="background:rgba(255,82,82,.15);color:#ff5252;border:1px solid rgba(255,82,82,.3);border-radius:6px;padding:3px 10px;font-size:.72rem;cursor:pointer;white-space:nowrap;">⏏ Logout</button>` : ''}
       </div>
     </div>
 
