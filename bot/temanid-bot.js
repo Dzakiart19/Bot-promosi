@@ -43,8 +43,10 @@ if (!API_ID || !API_HASH) {
   process.exit(1);
 }
 
-// ── Start web server (monitoring + health + api/stats) ────────────────────────
-startServer("TemanID Bot");
+// ── Start web server (stats + health saja, TANPA proxy auth Telegram) ────────
+// authProxy: false supaya dashboard port 3006 tidak tampilkan tombol OTP.
+// Login cukup sekali di Telegram Bot (port 3000), sesi dibaca otomatis.
+startServer("TemanID Bot", { authProxy: false });
 
 // ── Banner ────────────────────────────────────────────────────────────────────
 console.log(`${C.bold}${C.magenta}`);
