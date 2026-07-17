@@ -98,6 +98,25 @@ async function main() {
     }
 
     stats.status = "idle";
+
+    // Cek apakah error terakhir adalah daily limit X (501).
+    // Jika ya, tidur sampai midnight UTC berikutnya — limit X reset setiap hari.
+    if (stats.lastErrorMsg && /daily limit/i.test(stats.lastErrorMsg)) {
+      const now2   = new Date();
+      const midnight = new Date(Date.UTC(now2.getUTCFullYear(), now2.getUTCMonth(), now2.getUTCDate() + 1));
+      const msUntilMidnight = midnight.getTime() - Date.now();
+      const hoursLeft = (msUntilMidnight / 3_600_000).toFixed(1);
+      log("WARN", `Daily limit X tercapai — tidur ${hoursLeft} jam sampai midnight UTC (${midnight.toISOString()})`);
+      pushEvent("warn", `Daily limit — resume otomatis dalam ${hoursLeft} jam (midnight UTC)`);
+      stats.status = "idle";
+      // Reset error msg agar setelah bangun tidak re-trigger
+      stats.lastErrorMsg = `[menunggu reset daily limit — resume ${midnight.toUTCString()}]`;
+      await sleep(msUntilMidnight + 5_000);  // +5s buffer setelah midnight
+      log("INFO", "Midnight UTC tercapai — lanjut posting...");
+      pushEvent("info", "Daily limit reset — lanjut posting");
+      continue;
+    }
+
     // Tunggu 5 menit sebelum siklus berikutnya
     await sleep(config.LOOP_DELAY_MS);
   }
