@@ -202,7 +202,7 @@ localPort = 8000
 externalPort = 8000
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "vm"
 run = ["node", "bot/start-all.js"]
 
 [userenv]
