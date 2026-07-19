@@ -54,17 +54,33 @@ async function main() {
     configurable: true,
   });
 
-  let lastPostAt = Date.now();
-  // Init supaya siklus pertama selalu COMMENT
-  let lastPostTriggered = false;
+  // Seperti X Bot: masing-masing mode punya timer sendiri, loop 5 menit cek giliran.
+  // COMMENT dan POST masing-masing 1x per jam. Priority: POST > COMMENT.
+  // Init ke (now - interval) supaya siklus pertama langsung eksekusi keduanya.
+  let lastPostAt    = Date.now() - config.POST_INTERVAL_MS;
+  let lastCommentAt = Date.now() - config.COMMENT_INTERVAL_MS;
 
   while (true) {
+    const now       = Date.now();
+    const doPost    = (now - lastPostAt    >= config.POST_INTERVAL_MS);
+    const doComment = (now - lastCommentAt >= config.COMMENT_INTERVAL_MS);
+
+    if (!doPost && !doComment) {
+      // Tidak ada giliran — tunggu sampai siklus berikutnya
+      const nextPost    = config.POST_INTERVAL_MS    - (now - lastPostAt);
+      const nextComment = config.COMMENT_INTERVAL_MS - (now - lastCommentAt);
+      const waitMs      = Math.min(nextPost, nextComment, config.LOOP_DELAY_MS);
+      stats.status = "idle";
+      log("INFO", `Idle — comment dalam ${Math.ceil(nextComment/60000)}m, post dalam ${Math.ceil(nextPost/60000)}m`);
+      await sleep(waitMs);
+      continue;
+    }
+
+    // Pilih mode: POST punya prioritas lebih tinggi dari COMMENT
+    const mode = doPost ? "POST" : "COMMENT";
+
     stats.totalSessions++;
     stats.currentSession = stats.totalSessions;
-
-    const now    = Date.now();
-    const doPost = (now - lastPostAt >= config.POST_INTERVAL_MS);
-    const mode   = doPost ? "POST" : "COMMENT";
 
     log("INFO", "━".repeat(54));
     log("INFO", `  SIKLUS #${stats.totalSessions}  [${mode}]  |  Sent: ${stats.totalMsgSent}  Error: ${stats.totalErrors}`);
@@ -74,10 +90,11 @@ async function main() {
       let reason;
 
       if (doPost) {
-        reason    = await runPostSession(session);
+        reason     = await runPostSession(session);
         lastPostAt = Date.now();
       } else {
-        reason = await runCommentSession(session);
+        reason        = await runCommentSession(session);
+        lastCommentAt = Date.now();
       }
 
       log("INFO", `Siklus #${stats.totalSessions} [${mode}] selesai → "${reason}"`);
@@ -118,9 +135,8 @@ async function main() {
       }
     }
 
-    stats.status = "idle";
-    log("INFO", `Tunggu ${config.LOOP_DELAY_MS / 1000}s sebelum siklus berikutnya...`);
-    await sleep(config.LOOP_DELAY_MS);
+    // Langsung cek lagi (tanpa delay) — mungkin masih ada mode lain yang giliran
+    await sleep(1000);
   }
 }
 
