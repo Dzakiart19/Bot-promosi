@@ -518,18 +518,18 @@ function renderFeed(events) {
   }).join('');
 }
 
-/** Panel riwayat comment/reply khusus X Bot (tampil kalau stats.sentLog ada). */
+/** Panel riwayat comment/reply/post (tampil kalau stats.sentLog ada). */
 function renderSentLog(sentLog) {
   if (!sentLog || !sentLog.length) {
     return `<div class="panel" style="grid-column:1/-1;">
-      <div class="panel-header"><h3>📋 Riwayat Terkirim (X Bot)</h3><span style="font-size:0.68rem;color:var(--muted)">Belum ada kiriman</span></div>
+      <div class="panel-header"><h3>📋 Riwayat Terkirim</h3><span style="font-size:0.68rem;color:var(--muted)">Belum ada kiriman</span></div>
       <div class="panel-body" style="color:var(--muted);font-size:0.8rem;padding:12px;">Bot belum mengirim comment atau reply sejak terakhir restart.</div>
     </div>`;
   }
   const rows = sentLog.slice(0, 30).map(e => {
-    const badge = e.mode === 'comment'
-      ? `<span style="background:#1d4ed8;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.65rem;font-weight:700;">COMMENT</span>`
-      : `<span style="background:#6d28d9;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.65rem;font-weight:700;">REPLY</span>`;
+    const modeColors = { comment: '#1d4ed8', reply: '#6d28d9', post: '#059669' };
+    const modeLabel  = (e.mode || 'send').toUpperCase();
+    const badge = `<span style="background:${modeColors[e.mode] || '#374151'};color:#fff;border-radius:4px;padding:1px 6px;font-size:0.65rem;font-weight:700;">${modeLabel}</span>`;
     const snippet = escHtml((e.targetText || '').slice(0, 80)) + (e.targetText && e.targetText.length > 80 ? '…' : '');
     const targetLink = e.targetUrl
       ? `<a href="${escHtml(e.targetUrl)}" target="_blank" rel="noopener" title="Lihat postingan target" style="color:var(--accent2);font-size:0.72rem;white-space:nowrap;">Target ↗</a>`
