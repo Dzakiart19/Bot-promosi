@@ -50,6 +50,10 @@ args = "TemanID Bot"
 task = "workflow.run"
 args = "RandomPacar Bot"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "GETTR Bot"
+
 [[workflows.workflow]]
 name = "OpenTalk Bot"
 author = "agent"
@@ -157,6 +161,18 @@ waitForPort = 3007
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "GETTR Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=3008 node bot/gettr-bot.js"
+waitForPort = 3008
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 3000
 externalPort = 80
@@ -190,6 +206,10 @@ localPort = 3007
 externalPort = 5173
 
 [[ports]]
+localPort = 3008
+externalPort = 3008
+
+[[ports]]
 localPort = 4000
 externalPort = 4000
 
@@ -218,3 +238,5 @@ TELEGRAM_API_HASH = "a2732d77a9abc513db065170f563a603"
 SESSION_SECRET = "@Namakamusiapa123"
 X_COOKIES = "auth_token=6e614da9793ecbe2322d9fd4af24821bdecbe6db; ct0=6c7ded1538f3fc4bd72cac048dd719348eae8e01d13317ebfbf5a2acb8938cc7bb12a26f88fa31166ac5bb0311fa8af4de3e06cd624c4f81910ea5124de3efc03f5d944f45301ad2d22cc8bc6082ed28"
 GITHUB_TOKEN = "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"
+GETTR_USERNAME = "celadini"
+GETTR_PASSWORD = "nR5wT9LqqV"
