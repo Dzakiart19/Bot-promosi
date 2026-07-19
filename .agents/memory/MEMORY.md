@@ -10,3 +10,4 @@
 - [Telegram FloodWaitError handling](telegram-flood-wait.md) — harus baca err.seconds dari GramJS, bukan hardcoded 5s retry — kalau retry cepat, flood ban makin panjang.
 - [Telegram auth proxy rule](telegram-auth-proxy-rule.md) — temanid-bot & randompacar-bot WAJIB startServer(name, { authProxy: false }) — tanpa ini dashboard 3006/3007 tampilkan OTP UI dan user kira perlu login sendiri.
 - [Telegram Bot port conflict in production](telegram-port-conflict.md) — telegram-bot WAJIB di port 4000; $PORT=3000 di autoscale (externalPort=80), aggregator claim duluan → conflict → logout HTML error.
+- [GETTR API comment format](gettr-api-comment-format.md) — JSON body bukan FormData; field txt bukan rich_txt; _t:'cmt' wajib; user=userId di x-app-auth.
