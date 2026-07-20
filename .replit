@@ -54,6 +54,10 @@ args = "RandomPacar Bot"
 task = "workflow.run"
 args = "GETTR Bot"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Facebook Bot"
+
 [[workflows.workflow]]
 name = "OpenTalk Bot"
 author = "agent"
@@ -162,13 +166,13 @@ waitForPort = 3007
 outputType = "console"
 
 [[workflows.workflow]]
-name = "GETTR Bot"
+name = "Facebook Bot"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=3008 node bot/gettr-bot.js"
-waitForPort = 3008
+args = "PORT=3009 node bot/facebook-bot.js"
+waitForPort = 3009
 
 [workflows.workflow.metadata]
 outputType = "console"
@@ -210,6 +214,10 @@ localPort = 3008
 externalPort = 3008
 
 [[ports]]
+localPort = 3009
+externalPort = 3009
+
+[[ports]]
 localPort = 4000
 externalPort = 4000
 
@@ -240,3 +248,4 @@ X_COOKIES = "auth_token=6e614da9793ecbe2322d9fd4af24821bdecbe6db; ct0=6c7ded1538
 GITHUB_TOKEN = "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"
 GETTR_USERNAME = "celadini"
 GETTR_PASSWORD = "nR5wT9LqqV"
+FB_COOKIES = "dbln=%7B%2261591974366760%22%3A%22tnLPukDO%22%7D; dpr=2.2401232719421387; datr=_qVcan8v0BT20xE-XsM0TvqK; ps_l=1; ps_n=1; sb=EKZcalMm7Z8ElBHX7njYcwYA; locale=id_ID; c_user=100016908273908; xs=34%3A4_nJBgOXxNmTDA%3A2%3A1784522492%3A-1%3A-1; pas=61591974366760%3A4y3dr9wDZ8%2C100016908273908%3AOVLMYimoD3; vpd=v1%3B1200x599x2.0375001430511475; fr=0C8AngNIoKXcbJgt3.AWePPx3xi_THxdo6Vkk48M5Jeop7-jZikYqAT9-189NveV5EpuA.BqXKYQ..AAA.0.0.BqXa8h.AWcOEJ2dOpdIvc7D2OyUFK-R0Es; fbl_st=100634589%3BT%3A29742076; wl_cbv=v2%3Bclient_version%3A3222%3Btimestamp%3A1784524577"
