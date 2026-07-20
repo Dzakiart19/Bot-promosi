@@ -2,7 +2,7 @@
 
 ## Ringkasan Proyek
 
-Bot otomatis Node.js yang berjalan secara paralel di 9 platform: OpenTalk, Yapping, SillyChat, Chatib, DuckChat (chat anonim), X Bot (Twitter), dan 3 Telegram Bot (1 akun, 3 target bot). Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
+Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Yapping, SillyChat, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), dan GETTR Bot. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
 
 ## Cara Menjalankan
 
@@ -20,9 +20,10 @@ Bot otomatis Node.js yang berjalan secara paralel di 9 platform: OpenTalk, Yappi
 | Chatib | 3003 | Chatib Bot |
 | DuckChat | 3004 | DuckChat Bot |
 | X Bot | 3005 | X Bot |
-| Telegram | 3000 | Telegram Bot |
+| Telegram | 4000 | Telegram Bot |
 | TemanID | 3006 | TemanID Bot |
 | RandomPacar | 3007 | RandomPacar Bot |
+| GETTR | 3008 | GETTR Bot |
 
 ## Environment Variables (Secrets)
 
@@ -75,6 +76,7 @@ lib/platforms/
     session.js        ← thin wrapper — bind cfg randompacar ke shared-session
     persistence.js    ← re-export dari telegram/persistence (SAME DB KEY)
   x/
+  gettr/
 bot/
   opentalk-bot.js
   yapping-bot.js
@@ -85,6 +87,7 @@ bot/
   telegram-bot.js   ← main loop + auth/re-auth otomatis
   temanid-bot.js    ← secondary Telegram bot (no auth UI)
   randompacar-bot.js← secondary Telegram bot (no auth UI)
+  gettr-bot.js      ← GETTR social platform bot (POST + COMMENT)
   telegram-auth.js  ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
   start-all.js      ← launcher deployment
 public/
@@ -97,11 +100,11 @@ public/
 
 ### Telegram: Satu Login, Semua Bot Jalan
 
-Ketiga bot Telegram (telegram-bot, temanid-bot, randompacar-bot) menggunakan **satu akun / satu session**. Session dikelola **sepenuhnya** oleh `bot/telegram-bot.js` (port 3000). Bot sekunder hanya membaca session yang sudah ada.
+Ketiga bot Telegram (telegram-bot, temanid-bot, randompacar-bot) menggunakan **satu akun / satu session**. Session dikelola **sepenuhnya** oleh `bot/telegram-bot.js` (port 4000). Bot sekunder hanya membaca session yang sudah ada.
 
 **Konsekuensi arsitektur yang WAJIB diikuti:**
 
-| | `telegram-bot.js` (port 3000) | `temanid-bot.js` (port 3006) | `randompacar-bot.js` (port 3007) |
+| | `telegram-bot.js` (port 4000) | `temanid-bot.js` (port 3006) | `randompacar-bot.js` (port 3007) |
 |---|---|---|---|
 | Punya auth/OTP server | ✅ Ya (`auth-server.js`) | ❌ Tidak | ❌ Tidak |
 | `startServer()` | `startServer("Telegram Bot")` | `startServer("TemanID Bot", { authProxy: false })` | `startServer("RandomPacar Bot", { authProxy: false })` |
@@ -207,6 +210,20 @@ Konfigurasi timing di `lib/platforms/x/config.js`:
 - queryId di-discover otomatis dari bundle `main.js`; fallback ke nilai statis di config
 - Header `x-client-transaction-id` wajib di setiap request GraphQL
 - ID tweet yang sudah dibalas dicatat di `.replied-ids.json` (max 2000) untuk cegah duplikasi
+
+## GETTR Bot — Detail Alur
+
+GETTR Bot berjalan dalam dua siklus:
+
+| Mode | Frekuensi | Cara Kerja |
+|---|---|---|
+| **POST** | Periodik | Buat post baru dengan teks promo |
+| **COMMENT** | Periodik | Cari post populer → comment promo |
+
+- Auth via token JWT; re-login otomatis jika token expired
+- Sleep panjang jika kena rate limit / ban sementara
+- JSON body (bukan FormData); field `txt`, bukan `rich_txt`; `_t:'cmt'` wajib untuk comment
+- Port: **3008**
 
 ## Negara Prioritas
 
