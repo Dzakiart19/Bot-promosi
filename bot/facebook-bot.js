@@ -84,6 +84,21 @@ async function main() {
         await sleep(30 * 60 * 1000);
         continue;
       }
+
+      // Semua post dinonaktifkan / pool kosong → refresh cepat (5 detik)
+      if (reason === "all-disabled" || reason === "no-posts") {
+        log("WARN", `[FB] Pool post habis/semua disabled — refresh cepat`);
+        stats.status = "idle";
+        await sleep(5_000);
+        continue;
+      }
+
+      // Komentar dinonaktifkan atau all-commented → jangan tunggu 30s
+      if (reason === "all-commented" || reason === "comments-disabled") {
+        stats.status = "idle";
+        await sleep(3_000);
+        continue;
+      }
     } catch (err) {
       consecutiveErrors++;
       stats.totalErrors++;
