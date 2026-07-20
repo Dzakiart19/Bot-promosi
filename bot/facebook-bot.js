@@ -69,6 +69,14 @@ async function main() {
       pushEvent("end_session", `Siklus #${stats.totalSessions} selesai: ${reason}`);
       consecutiveErrors = 0;
 
+      // Rate-limit Facebook — istirahat 10 menit supaya ban cepat lift
+      if (reason === "rate-limited") {
+        log("WARN", "[FB] Rate-limited oleh Facebook — istirahat 10 menit");
+        stats.status = "idle";
+        await sleep(10 * 60 * 1000);
+        continue;
+      }
+
       // Kalau akun blocked, tunggu lebih lama
       if (reason === "account-blocked") {
         log("WARN", "[FB] Akun blocked — tidur 30 menit");
