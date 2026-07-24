@@ -50,6 +50,10 @@ args = "RandomPacar Bot"
 task = "workflow.run"
 args = "GETTR Bot"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "AnonChat Bot"
+
 [[workflows.workflow]]
 name = "OpenTalk Bot"
 author = "agent"
@@ -145,6 +149,18 @@ waitForPort = 3007
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "AnonChat Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=3009 node bot/anonchat-bot.js"
+waitForPort = 3009
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 3000
 externalPort = 80
@@ -176,6 +192,10 @@ externalPort = 5173
 [[ports]]
 localPort = 3008
 externalPort = 3008
+
+[[ports]]
+localPort = 3009
+externalPort = 3001
 
 [[ports]]
 localPort = 4000
