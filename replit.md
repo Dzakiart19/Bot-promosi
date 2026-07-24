@@ -2,7 +2,7 @@
 
 ## Ringkasan Proyek
 
-Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Yapping, SillyChat, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), dan GETTR Bot. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
+Bot otomatis Node.js yang berjalan secara paralel di 11 platform: OpenTalk, Yapping, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, AnonChat, dan Threads Bot. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
 
 ## Cara Menjalankan
 
@@ -16,7 +16,6 @@ Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Yapp
 |---|---|---|
 | OpenTalk | 8000 | OpenTalk Bot |
 | Yapping | 3002 | Yapping Bot |
-| SillyChat | 3001 | SillyChat Bot |
 | Chatib | 3003 | Chatib Bot |
 | DuckChat | 3004 | DuckChat Bot |
 | X Bot | 3005 | X Bot |
@@ -24,6 +23,8 @@ Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Yapp
 | TemanID | 3006 | TemanID Bot |
 | RandomPacar | 3007 | RandomPacar Bot |
 | GETTR | 3008 | GETTR Bot |
+| AnonChat | 3009 | AnonChat Bot |
+| Threads | 3010 | Threads Bot |
 
 ## Environment Variables (Secrets)
 
@@ -33,6 +34,11 @@ Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Yapp
 | `TELEGRAM_API_ID` | App ID dari my.telegram.org |
 | `TELEGRAM_API_HASH` | App hash dari my.telegram.org |
 | `TELEGRAM_PHONE` | Nomor HP format internasional (+62...) |
+| `GETTR_TOKEN` | JWT token GETTR dari browser (lebih andal dari password login) |
+| `GETTR_USER_ID` | User ID GETTR (numeric, dari profil atau JWT payload) |
+| `GETTR_USERNAME` | Username GETTR (fallback jika tidak pakai TOKEN) |
+| `ANONCHAT_COOKIES` | Cookie AnonChat: `auth_token=...; user_id=...` |
+| `THREADS_COOKIES` | Cookie Threads: `sessionid=...; csrftoken=...` — wajib untuk Threads Bot |
 
 > **Catatan:** `TELEGRAM_SESSION` / `SESSION_SECRET` TIDAK perlu diisi manual.
 > Session tersimpan otomatis ke Replit DB + file `.telegram_session` setelah OTP pertama.
@@ -52,6 +58,18 @@ Session tersimpan di **Replit DB** — tidak hilang walau:
 
 Jika session expired: monitor otomatis tampilkan form OTP lagi → bot resume tanpa restart.
 
+## Autentikasi Threads Bot
+
+1. Buka **threads.com** di browser → login ke akun
+2. Buka DevTools → **Application** → **Cookies** → `threads.com`
+3. Copy nilai cookie `sessionid` dan `csrftoken`
+4. Set Secrets: `THREADS_COOKIES = "sessionid=<val>; csrftoken=<val>"`
+5. Start workflow **Threads Bot** — bot langsung verify dan mulai posting
+
+Jika session expired (biasanya setelah beberapa bulan):
+- Log akan menampilkan: `Session Threads tidak valid / expired`
+- Ulangi langkah 1–5 dengan session baru
+
 ## Arsitektur
 
 ```
@@ -59,9 +77,9 @@ lib/core/           ← infra bersama: logger, stats, Express server, platforms-
 lib/platforms/
   opentalk/         ← config + guest + session + index
   yapping/
-  sillychat/
   chatib/
   duckchat/
+  anonchat/
   telegram/
     config.js         ← target bot, pesan promo, timing
     shared-session.js ← createMessageListener + runSession GENERIK (menerima cfg)
@@ -76,11 +94,30 @@ lib/platforms/
     session.js        ← thin wrapper — bind cfg randompacar ke shared-session
     persistence.js    ← re-export dari telegram/persistence (SAME DB KEY)
   x/
+    config.js         ← keywords, reply/comment/post texts, timing
+    client.js         ← GraphQL client (auto-discover queryId + x-client-transaction-id)
+    guest.js          ← verifikasi X_COOKIES
+    session.js        ← runReplySession / runCommentSession / runPostSession
+    replied-store.js  ← persist ID tweet yang sudah dibalas (anti-duplikat)
+    sent-log.js       ← riwayat kiriman in-memory (tampil di dashboard)
+    transaction-id.js ← generate x-client-transaction-id anti-bot header
   gettr/
+    config.js
+    client.js         ← login + trending + post/comment
+    session.js        ← runCommentSession / runPostSession
+    replied-store.js
+    sent-log.js
+  threads/            ← ← ← BARU: Threads (threads.com)
+    config.js         ← keywords, comment/post texts, doc_id fallback, timing
+    client.js         ← GraphQL client (LSD token auto-extract + doc_id discovery)
+    guest.js          ← verifikasi THREADS_COOKIES
+    session.js        ← runCommentSession / runPostSession
+    replied-store.js  ← persist ID thread yang sudah dikomentari
+    sent-log.js       ← riwayat kiriman in-memory
+    index.js
 bot/
   opentalk-bot.js
   yapping-bot.js
-  silly-bot.js
   chatib-bot.js
   duckchat-bot.js
   x-bot.js
@@ -88,10 +125,12 @@ bot/
   temanid-bot.js    ← secondary Telegram bot (no auth UI)
   randompacar-bot.js← secondary Telegram bot (no auth UI)
   gettr-bot.js      ← GETTR social platform bot (POST + COMMENT)
+  anonchat-bot.js   ← AnonChat anonymous chat bot (cookie auth)
+  threads-bot.js    ← ← ← BARU: Threads bot (POST + COMMENT)
   telegram-auth.js  ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
   start-all.js      ← launcher deployment
 public/
-  monitor.html      ← dashboard monitor universal (auto-refresh 5 detik)
+  monitor.html      ← dashboard monitor universal (auto-refresh 2 detik)
 ```
 
 ---
@@ -100,142 +139,75 @@ public/
 
 ### Telegram: Satu Login, Semua Bot Jalan
 
-Ketiga bot Telegram (telegram-bot, temanid-bot, randompacar-bot) menggunakan **satu akun / satu session**. Session dikelola **sepenuhnya** oleh `bot/telegram-bot.js` (port 4000). Bot sekunder hanya membaca session yang sudah ada.
+Ketiga bot Telegram (telegram-bot, temanid-bot, randompacar-bot) **berbagi satu session/akun Telegram**.
+Session tersimpan di Replit DB — login cukup sekali di dashboard port 4000.
 
-**Konsekuensi arsitektur yang WAJIB diikuti:**
+- `temanid-bot.js` dan `randompacar-bot.js` WAJIB dipanggil dengan `startServer(name, { authProxy: false })`
+- Tanpa `authProxy: false`, dashboard mereka akan tampilkan tombol OTP yang memperlihatkan form login Telegram padahal mereka tidak perlu login sendiri
 
-| | `telegram-bot.js` (port 4000) | `temanid-bot.js` (port 3006) | `randompacar-bot.js` (port 3007) |
-|---|---|---|---|
-| Punya auth/OTP server | ✅ Ya (`auth-server.js`) | ❌ Tidak | ❌ Tidak |
-| `startServer()` | `startServer("Telegram Bot")` | `startServer("TemanID Bot", { authProxy: false })` | `startServer("RandomPacar Bot", { authProxy: false })` |
-| Dashboard tampil tombol OTP | ✅ Ya | ❌ Tidak — harus `authProxy: false` | ❌ Tidak — harus `authProxy: false` |
-| Bisa trigger login baru | ✅ Ya | ❌ Tidak | ❌ Tidak |
+### Platforms Registry: Restart SEMUA setelah edit
 
-**`authProxy: false` WAJIB** di temanid-bot dan randompacar-bot. Tanpa ini, dashboard port 3006/3007 akan menampilkan tombol OTP → user mengira setiap bot perlu login sendiri → konflik sesi.
+Setelah edit `lib/core/platforms-registry.js`, restart **SEMUA** workflow (bukan hanya yang baru) karena file ini di-cache in-process. Tanpa restart semua, `/api/stats/all` tidak akan menampilkan platform baru di dashboard.
 
-### `startServer()` — Opsi `authProxy`
+### Telegram Bot: Port 4000
 
-```js
-// ✅ BENAR: Telegram Bot — satu-satunya yang boleh expose auth UI
-startServer("Telegram Bot");                           // authProxy default: true
-
-// ✅ BENAR: Bot sekunder — stats saja, tanpa auth UI
-startServer("TemanID Bot",    { authProxy: false });
-startServer("RandomPacar Bot", { authProxy: false });
-
-// ❌ SALAH: Bot sekunder pakai startServer() tanpa authProxy: false
-startServer("TemanID Bot");   // ini akan munculkan tombol OTP di dashboard 3006!
-```
-
-### Session Sharing — Cara Kerjanya
-
-1. `telegram-bot.js` menulis session ke Replit DB (key: `telegram_session`) + file `.telegram_session`
-2. `temanid-bot.js` dan `randompacar-bot.js` **poll** sampai session tersedia, lalu baca dengan `readSession()`
-3. `lib/platforms/temanid/persistence.js` dan `lib/platforms/randompacar/persistence.js` keduanya **re-export** dari `lib/platforms/telegram/persistence.js` — satu DB key, tidak ada duplikasi
-4. Tiga GramJS `TelegramClient` berjalan simultan dengan session string yang sama — ini valid dan by design
-
-### `shared-session.js` — Satu Logika untuk Semua Telegram Bot
-
-Jangan copy-paste `runSession` atau `createMessageListener` ke session.js per-platform. Gunakan factory dari `lib/platforms/telegram/shared-session.js`:
-
-```js
-// Di session.js tiap platform:
-const cfg    = require("./config");
-const shared = require("../telegram/shared-session");
-const { createMessageListener, runSession } = shared.makeSession(cfg);
-module.exports = { createMessageListener, runSession };
-```
-
-Perbedaan antar bot hanya di config masing-masing (MATCH_SIGNALS, DELAY_SEND_MS, MSG, dll).
-
-### Telegram FloodWaitError
-
-GramJS melempar error dengan `err.seconds` saat kena rate limit. **Harus tunggu `err.seconds` detik**, bukan hardcode 5 detik:
-
-```js
-const waitSec = err.seconds || 0;
-if (waitSec > 0) {
-  await sleep(waitSec * 1000 + 1000); // +1s buffer
-} else {
-  await sleep(5000);
-}
-```
-
-Retry sebelum cooldown habis akan memperparah flood ban.
-
-### Jangan Refactor Kalau Tidak Tahu Bedanya
-
-`startStatsServer()` yang ada di bot sekunder terlihat seperti "duplikat" dari `startServer()` di `lib/core/server.js` — tapi **punya perbedaan penting**: tidak ada `/api/telegram-auth/:action`. Kalau diganti `startServer()` tanpa `{ authProxy: false }`, hasilnya UI auth muncul di semua port.
-
-**Prinsip:** sebelum menyatakan sesuatu "duplikat", pastikan kamu tahu persis apa bedanya — mungkin bedanya ada alasan.
+Telegram Bot WAJIB jalan di port 4000 (bukan 3000). Di environment autoscale, `$PORT=3000` sudah diklaim oleh aggregator deployment — kalau Telegram Bot juga pakai 3000, akan terjadi konflik port yang menyebabkan error logout HTML.
 
 ---
 
-## Telegram Bot — Detail Alur
+## Detail Per Platform
 
-```
-/search
-  → tunggu "Pasangan telah ditemukan" (timeout 90s → /search ulang)
-  → delay DELAY_SEND_MS (temanid: 0ms langsung, telegram/randompacar: 3000ms)
-  → kirim promo acak dari MESSAGE_GREETS
-  → delay DELAY_NEXT_MS (5000ms)
-  → /next
-  → [loop tanpa /search ulang — server otomatis carikan pasangan baru]
-```
+### Chat Anonim (OpenTalk, Yapping, Chatib, DuckChat, AnonChat)
 
-Pesan lain di luar match-signal ("Jangan terlalu cepat", pesan PROMOTE, dll) diabaikan secara otomatis dalam loop tunggu match.
+Semua mengikuti pola: `createGuest() → connect WebSocket → join queue → match → kirim sapaan → tunggu balasan → kirim pamit → disconnect → loop`
 
-Event handler dipasang **sekali** secara permanen dengan buffer — tidak ada race condition antar sesi.
+| Platform | Auth | Enkripsi | Catatan |
+|---|---|---|---|
+| OpenTalk | JWT (anonymous) | Tidak | peerCountry tersedia (filter negara aktif) |
+| Yapping | Cookie (anonymous) | Tidak | Fallback ke SAFE msg jika LINK_NOT_ALLOWED |
+| Chatib | Cookie (anonymous) | Tidak | Model lobby (broadcast), bukan 1-on-1 queue; country filter aktif |
+| DuckChat | API token (anonymous) | AES-256-CTR key="secret_key" | |
+| AnonChat | Cookie (akun login) | AES (secret hash) | Butuh `ANONCHAT_COOKIES` |
 
-## X Bot — Tiga Mode
+### Telegram (3 bot, 1 akun)
 
-X Bot berjalan berdasarkan prioritas dan timer per siklus (setiap 5 menit):
+- `telegram-bot.js` (port 4000): auth utama + OTP UI di dashboard
+- `temanid-bot.js` (port 3006): thin wrapper ke @temanidbot, `authProxy: false`
+- `randompacar-bot.js` (port 3007): thin wrapper ke @random_pacar_bot, `authProxy: false`
 
-| Mode | Frekuensi | Cara Kerja |
-|---|---|---|
-| **POST** | 1× per jam (prioritas tertinggi) | Buat tweet baru dengan teks promo acak dari 15 variasi |
-| **REPLY** | 1× per jam | Cari tweet via `KEYWORDS` → reply pesan promo |
-| **COMMENT** | Setiap 5 menit (default) | Cari tweet via `COMMENT_KEYWORDS` → comment langsung |
+### X Bot (port 3005)
 
-**Urutan prioritas:** `POST > REPLY > COMMENT`
+Siklus: COMMENT → REPLY → POST (masing-masing 1 jam interval, 5 menit loop).
+- GraphQL queryId di-discover otomatis dari main.js bundle
+- `x-client-transaction-id` wajib (tanpa ini X tolak dengan 404)
+- `.replied-ids.json` cegah duplikat reply/comment
 
-Konfigurasi timing di `lib/platforms/x/config.js`:
-- `LOOP_DELAY_MS` = 300000 (5 menit)
-- `REPLY_INTERVAL_MS` = 3600000 (1 jam)
-- `POST_INTERVAL_MS` = 3600000 (1 jam)
+### GETTR Bot (port 3008)
 
-### Catatan Penting X Bot
+Siklus: POST + COMMENT (masing-masing 1 jam, 5 menit loop).
+- Pakai `GETTR_TOKEN` + `GETTR_USER_ID` untuk bypass Imperva (lebih andal dari login)
+- JSON body: field `txt`, bukan `rich_txt`; `_t:'cmt'` wajib untuk comment
 
-- `HomeTimeline`/`HomeLatestTimeline` GraphQL tidak bisa diakses tanpa browser runtime — COMMENT mode pakai `SearchTimeline`
-- queryId di-discover otomatis dari bundle `main.js`; fallback ke nilai statis di config
-- Header `x-client-transaction-id` wajib di setiap request GraphQL
-- ID tweet yang sudah dibalas dicatat di `.replied-ids.json` (max 2000) untuk cegah duplikasi
+### Threads Bot (port 3010) — BARU
 
-## GETTR Bot — Detail Alur
+Siklus: POST + COMMENT (POST 1 jam, COMMENT tiap 5 menit).
+- Pakai cookie `sessionid` + `csrftoken` dari browser Threads
+- LSD token di-extract otomatis dari HTML (`__eqmc` script tag) setiap startup
+- GraphQL doc_id di-discover dari JS bundle CDN; fallback ke nilai hardcoded di config.js
+- Jika log menampilkan `"Query not found"` → doc_id sudah berubah, update `DOC_ID_FALLBACK` di `lib/platforms/threads/config.js`
 
-GETTR Bot berjalan dalam dua siklus:
-
-| Mode | Frekuensi | Cara Kerja |
-|---|---|---|
-| **POST** | Periodik | Buat post baru dengan teks promo |
-| **COMMENT** | Periodik | Cari post populer → comment promo |
-
-- Auth via token JWT; re-login otomatis jika token expired
-- Sleep panjang jika kena rate limit / ban sementara
-- JSON body (bukan FormData); field `txt`, bukan `rich_txt`; `_t:'cmt'` wajib untuk comment
-- Port: **3008**
+---
 
 ## Negara Prioritas
 
-24 negara ditandai ⭐ di log/dashboard (tanpa skip): AS, Kanada, Inggris, Australia, Selandia Baru, Swiss, Norwegia, Swedia, Denmark, Finlandia, Irlandia, Belanda, Luksemburg, Jerman, Prancis, Austria, Belgia, Singapura, Jepang, Korea Selatan, Hong Kong, UEA, Qatar, Kuwait.
+20 negara ditandai ⭐ di log/dashboard (tanpa skip): AS, Kanada, Inggris, Australia, Singapura, Arab Saudi, Swedia, Finlandia, Swiss, Jerman, Prancis, Belanda, Belgia, Austria, Jepang, UAE, Qatar, Selandia Baru, Denmark, Luksemburg.
 
 ## Filter Negara Partner
 
-Partner dari negara berikut di-skip otomatis: India, Bangladesh, Pakistan, Nepal, Sri Lanka, Filipina, Vietnam, Myanmar, Kamboja, Laos.
+Blocklist negara saat ini **kosong** — semua negara partner diterima. Untuk memblokir negara tertentu, isi `BLOCKED_COUNTRIES` di `lib/core/country-filter.js`.
 
-- Blocklist: `lib/core/country-filter.js`
 - **OpenTalk & Chatib**: didukung penuh (protokol ekspos negara partner)
-- **Yapping, SillyChat, DuckChat, Telegram**: tidak bisa difilter (protokol tidak ekspos negara)
+- **Yapping, DuckChat, Telegram, AnonChat, X, GETTR, Threads**: tidak bisa difilter (protokol tidak ekspos negara)
 
 ## Menambah Platform Baru
 
@@ -244,6 +216,7 @@ Partner dari negara berikut di-skip otomatis: India, Bangladesh, Pakistan, Nepal
 3. Tambah baris ke `lib/core/platforms-registry.js`
 4. Buat workflow baru di Replit
 5. Restart **SEMUA** workflow (bukan hanya yang baru) — karena `platforms-registry.js` di-cache in-process
+6. Tambah entry ke array `BOT_FILES` di `install.sh`
 
 ## Menambah Telegram Bot Sekunder Baru
 

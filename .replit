@@ -54,6 +54,10 @@ args = "GETTR Bot"
 task = "workflow.run"
 args = "AnonChat Bot"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Threads Bot"
+
 [[workflows.workflow]]
 name = "OpenTalk Bot"
 author = "agent"
@@ -170,6 +174,18 @@ task = "shell.exec"
 args = "PORT=3008 node bot/gettr-bot.js"
 waitForPort = 3008
 
+[[workflows.workflow]]
+name = "Threads Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=3010 node bot/threads-bot.js"
+waitForPort = 3010
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 3000
 externalPort = 80
@@ -205,6 +221,10 @@ externalPort = 3008
 [[ports]]
 localPort = 3009
 externalPort = 3001
+
+[[ports]]
+localPort = 3010
+externalPort = 3010
 
 [[ports]]
 localPort = 4000
