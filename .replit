@@ -161,6 +161,15 @@ waitForPort = 3009
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "GETTR Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=3008 node bot/gettr-bot.js"
+waitForPort = 3008
+
 [[ports]]
 localPort = 3000
 externalPort = 80
