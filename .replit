@@ -24,10 +24,6 @@ args = "Yapping Bot"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "SillyChat Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Chatib Bot"
 
 [[workflows.workflow.tasks]]
@@ -77,18 +73,6 @@ outputType = "console"
 task = "shell.exec"
 args = "PORT=3002 node bot/yapping-bot.js"
 waitForPort = 3002
-
-[[workflows.workflow]]
-name = "SillyChat Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3001 node bot/silly-bot.js"
-waitForPort = 3001
-
-[workflows.workflow.metadata]
-outputType = "console"
 
 [[workflows.workflow]]
 name = "Chatib Bot"
@@ -166,10 +150,6 @@ localPort = 3000
 externalPort = 80
 
 [[ports]]
-localPort = 3001
-externalPort = 3001
-
-[[ports]]
 localPort = 3002
 externalPort = 3002
 
@@ -227,4 +207,4 @@ SESSION_SECRET = "@Namakamusiapa123"
 X_COOKIES = "auth_token=6e614da9793ecbe2322d9fd4af24821bdecbe6db; ct0=6c7ded1538f3fc4bd72cac048dd719348eae8e01d13317ebfbf5a2acb8938cc7bb12a26f88fa31166ac5bb0311fa8af4de3e06cd624c4f81910ea5124de3efc03f5d944f45301ad2d22cc8bc6082ed28"
 GITHUB_TOKEN = "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"
 GETTR_USERNAME = "celadini"
-GETTR_PASSWORD = "nR5wT9LqqV"
+GETTR_PASSWORD = "nR5wT9LqqW"
