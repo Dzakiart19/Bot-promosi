@@ -228,3 +228,4 @@ X_COOKIES = "auth_token=6e614da9793ecbe2322d9fd4af24821bdecbe6db; ct0=6c7ded1538
 GITHUB_TOKEN = "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"
 GETTR_USERNAME = "celadini"
 GETTR_PASSWORD = "nR5wT9LqqW"
+ANONCHAT_COOKIES = "auth_token=1784875109087-bfc28c01-7392-4e17-be15-0edcb37cfcde; user_id=5f9bed96-50f4-4a11-8b84-de50921411ce"
