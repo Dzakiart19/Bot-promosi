@@ -45,7 +45,7 @@ if (!API_ID || !API_HASH) {
 
 // ── Start web server (stats + health saja, TANPA proxy auth Telegram) ────────
 // authProxy: false supaya dashboard port 3007 tidak tampilkan tombol OTP.
-// Login cukup sekali di Telegram Bot (port 3000), sesi dibaca otomatis.
+// Login cukup sekali di Telegram Bot (port 4000), sesi dibaca otomatis.
 startServer("RandomPacar Bot", { authProxy: false });
 
 // ── Banner ────────────────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ async function main() {
   let session = await readSession();
   if (!session) {
     log("INFO", "Session belum ada — menunggu Telegram Bot selesai auth...");
-    log("INFO", "Login sekali di monitor Telegram Bot (port 3000), bot ini otomatis jalan.");
+    log("INFO", "Login sekali di monitor Telegram Bot (port 4000), bot ini otomatis jalan.");
     stats.status = "waiting_session";
 
     while (!session) {
