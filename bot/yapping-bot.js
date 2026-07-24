@@ -31,6 +31,18 @@ console.log("     ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝     �
 console.log(`${C.reset}${C.cyan}  Platform : yapping.me/chat${C.reset}`);
 console.log();
 
+// ── Exponential backoff state (untuk error berulang seperti platform down) ────
+const BACKOFF = {
+  consecutive: 0,
+  minMs:   30_000,   // 30 detik
+  maxMs:  600_000,   // 10 menit
+};
+
+function backoffDelay() {
+  const ms = Math.min(BACKOFF.minMs * 2 ** BACKOFF.consecutive, BACKOFF.maxMs);
+  return ms;
+}
+
 // ── Main loop ─────────────────────────────────────────────────────────────────
 async function main() {
   while (true) {
@@ -47,9 +59,13 @@ async function main() {
       log("SUCCESS", `Guest: ${guest.displayName}  (${guest.username})`);
       pushEvent("new_session", `Sesi #${stats.totalSessions} — ${guest.displayName}`);
 
+      BACKOFF.consecutive = 0; // reset backoff setelah berhasil connect
+
       const reason = await runSession(guest);
       log("INFO", `Sesi #${stats.totalSessions} selesai → "${reason}"`);
       pushEvent("end_session", `Sesi #${stats.totalSessions} selesai: ${reason}`);
+
+      await sleep(config.LOOP_DELAY_MS);
 
     } catch (err) {
       log("ERROR", `Sesi #${stats.totalSessions} error: ${err.message}`);
@@ -57,10 +73,22 @@ async function main() {
       stats.lastErrorAt  = Date.now();
       stats.lastErrorMsg = err.message;
       pushEvent("error", `Sesi #${stats.totalSessions}: ${err.message}`);
+
+      // Platform down (HTTP 522/503/504) → exponential backoff
+      if (/522|503|504|ECONNREFUSED|ETIMEDOUT/.test(err.message)) {
+        BACKOFF.consecutive++;
+        const wait = backoffDelay();
+        log("WARN", `Platform down — backoff #${BACKOFF.consecutive}, tunggu ${Math.round(wait / 1000)}s...`);
+        stats.status = "backoff";
+        pushEvent("warn", `Platform down — retry dalam ${Math.round(wait / 1000)}s`);
+        await sleep(wait);
+      } else {
+        BACKOFF.consecutive = 0;
+        await sleep(config.LOOP_DELAY_MS);
+      }
     }
 
     stats.status = "idle";
-    await sleep(config.LOOP_DELAY_MS);
   }
 }
 

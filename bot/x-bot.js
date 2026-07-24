@@ -34,16 +34,24 @@ console.log();
 // ── Main loop ─────────────────────────────────────────────────────────────────
 async function main() {
   let account;
-  try {
-    log("BOT", "Verifikasi cookie session X (auth_token/ct0)...");
-    account = await createGuest();
-    log("SUCCESS", `Login OK sebagai @${account.displayName} (${account.userId})`);
-  } catch (err) {
-    log("ERROR", `FATAL: cookie X tidak valid — ${err.message}`);
-    stats.status = "error";
-    stats.lastErrorMsg = err.message;
-    stats.lastErrorAt = Date.now();
-    process.exit(1);
+
+  // Tunggu hingga X_COOKIES tersedia dan valid (retry setiap 60 detik)
+  while (!account) {
+    try {
+      log("BOT", "Verifikasi cookie session X (auth_token/ct0)...");
+      account = await createGuest();
+      log("SUCCESS", `Login OK sebagai @${account.displayName} (${account.userId})`);
+    } catch (err) {
+      if (!process.env.X_COOKIES) {
+        log("WARN", "X_COOKIES belum diset — set env var lalu bot otomatis jalan. Cek ulang tiap 60 detik...");
+      } else {
+        log("ERROR", `Cookie X tidak valid — ${err.message}. Retry dalam 60 detik...`);
+      }
+      stats.status = "waiting-cookie";
+      stats.lastErrorMsg = err.message;
+      stats.lastErrorAt = Date.now();
+      await sleep(60_000);
+    }
   }
 
   // Expose sent log ke /api/stats supaya dashboard bisa baca

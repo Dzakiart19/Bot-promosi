@@ -31,6 +31,14 @@ console.log("  ╚══════╝╚═╝╚══════╝╚═�
 console.log(`${C.reset}${C.cyan}  Platform : silly.chat/text-chat${C.reset}`);
 console.log();
 
+// ── Exponential backoff state (untuk CAPTCHA block / platform error berulang) ─
+const BACKOFF = {
+  consecutive: 0,
+  captchaMs:  300_000,  // mulai 5 menit untuk CAPTCHA block
+  platformMs:  30_000,  // mulai 30 detik untuk platform error
+  maxMs:      900_000,  // max 15 menit
+};
+
 // ── Main loop ─────────────────────────────────────────────────────────────────
 async function main() {
   while (true) {
@@ -47,9 +55,13 @@ async function main() {
       log("SUCCESS", `Guest: ${guest.displayName}  (${guest.userId})`);
       pushEvent("new_session", `Sesi #${stats.totalSessions} — ${guest.displayName}`);
 
+      BACKOFF.consecutive = 0; // reset setelah berhasil
+
       const reason = await runSession(guest);
       log("INFO", `Sesi #${stats.totalSessions} selesai → "${reason}"`);
       pushEvent("end_session", `Sesi #${stats.totalSessions} selesai: ${reason}`);
+
+      await sleep(config.LOOP_DELAY_MS);
 
     } catch (err) {
       log("ERROR", `Sesi #${stats.totalSessions} error: ${err.message}`);
@@ -57,10 +69,30 @@ async function main() {
       stats.lastErrorAt  = Date.now();
       stats.lastErrorMsg = err.message;
       pushEvent("error", `Sesi #${stats.totalSessions}: ${err.message}`);
+
+      // CAPTCHA block (HTTP 403 dari /api/auth/guest-token) → backoff panjang
+      if (/403/.test(err.message)) {
+        BACKOFF.consecutive++;
+        const wait = Math.min(BACKOFF.captchaMs * BACKOFF.consecutive, BACKOFF.maxMs);
+        log("WARN", `CAPTCHA block — backoff #${BACKOFF.consecutive}, tunggu ${Math.round(wait / 60000)}m ${Math.round((wait % 60000) / 1000)}s...`);
+        stats.status = "captcha-blocked";
+        pushEvent("warn", `CAPTCHA block — retry dalam ${Math.round(wait / 60000)} menit`);
+        await sleep(wait);
+      } else if (/522|503|504|ECONNREFUSED|ETIMEDOUT/.test(err.message)) {
+        // Platform down
+        BACKOFF.consecutive++;
+        const wait = Math.min(BACKOFF.platformMs * 2 ** BACKOFF.consecutive, BACKOFF.maxMs);
+        log("WARN", `Platform down — backoff #${BACKOFF.consecutive}, tunggu ${Math.round(wait / 1000)}s...`);
+        stats.status = "backoff";
+        pushEvent("warn", `Platform down — retry dalam ${Math.round(wait / 1000)}s`);
+        await sleep(wait);
+      } else {
+        BACKOFF.consecutive = 0;
+        await sleep(config.LOOP_DELAY_MS);
+      }
     }
 
     stats.status = "idle";
-    await sleep(config.LOOP_DELAY_MS);
   }
 }
 
