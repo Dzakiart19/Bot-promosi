@@ -273,3 +273,6 @@ GETTR_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyNzg3NTA0MTc4
 GETTR_USER_ID = "278750417826824192"
 X_AUTH_TOKEN = "667cadf4b3339a86bd832a3a62b06f469b464aff"
 X_CT0 = "5b5015d02d84f41d79f47bfbbcb43814e136f7010cb7d9ab93ba13806eecb8241a35d77e4c6abebbdbb04eea7e44c9e89e43ec5ef1a39077069f8db31440d3157c9dede7df5fe9abf13aced6e92bb449"
+BLUESKY_IDENTIFIER = "dzeckart@gmail.com"
+BLUESKY_PASSWORD = "@Namakamusiapa123"
+QUORA_COOKIES = "m-b=2SnmyBqfGrbxar7WfB0CxA==; m-b_lax=2SnmyBqfGrbxar7WfB0CxA==; m-b_strict=2SnmyBqfGrbxar7WfB0CxA==; m-s=7L0Qqw4QSf2sMbQecnzaRg==; m-ans_frontend_early_version=3c485d23e9a3233f; m-screen_size=599x1332; m-ql10n_id=https%3A%2F%2Fqsbr.cf2.quoracdn.net%2F-4-l10n_main-30-id-1f993e32f1a26cee.translation.json; m-dynamicFontSize=regular; m-signup_form_type=homepage; m-themeStrategy=auto; m-theme=dark; m-login=1; m-uid=3216920296; _twpid=tw.1785080908294.485982094275645511; _gcl_au=1.1.1108370706.1785080909; _fbp=fb.1.1785080908713.34009387286572952; _scid=zPSH0u2FKJLs4ASui1uEZ8QJQ1mJ0Hhk; _scid_r=zPSH0u2FKJLs4ASui1uEZ8QJQ1mJ0Hhk; _sc_cspv=https%3A%2F%2Ftr.snapchat.com%2Fp; _sctr=1%7C1784998800000"
