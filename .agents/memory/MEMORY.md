@@ -12,3 +12,4 @@
 - [Telegram Bot port conflict in production](telegram-port-conflict.md) — telegram-bot WAJIB di port 4000; $PORT=3000 di autoscale (externalPort=80), aggregator claim duluan → conflict → logout HTML error.
 - [GETTR API comment format](gettr-api-comment-format.md) — JSON body bukan FormData; field txt bukan rich_txt; _t:'cmt' wajib; user=userId di x-app-auth.
 - [GETTR search API limitation](gettr-search-api-limitation.md) — search/srchposts tidak berfungsi server-side; pakai trending+filter blocked_accounts sebagai workaround; comment tampil di Replies via field pid.
+- [GETTR comment endpoint yang benar](gettr-comment-endpoint.md) — satu-satunya cara comment: POST /api/u/post + {pid:postId} di body. Endpoint /post/{id}/comment gagal untuk root post; /post/{c37p}/comment ghost (ID sama dikembalikan).

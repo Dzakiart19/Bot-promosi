@@ -160,7 +160,7 @@ Siklus: COMMENT → REPLY → POST (masing-masing 1 jam interval, 5 menit loop).
 Siklus: POST + COMMENT (masing-masing 1 jam, 5 menit loop).
 - Pakai `GETTR_TOKEN` + `GETTR_USER_ID` untuk bypass Imperva (lebih andal dari login)
 - JSON body: field `txt`, bukan `rich_txt`; `_t:'cmt'` wajib untuk comment
-- **Strategi thread-reply (Juli 2026):** endpoint `/u/post/{id}/comment` hanya berhasil jika target berformat `c37p...` (comment), bukan `p426...` (root post). Bot fetch komentar pertama dari target post, reply ke komentar itu → hasilnya sub-reply dalam thread asli. Fallback ke profile-reply jika fetch gagal.
+- **Strategi direct-reply (confirmed live test Juli 2026):** satu-satunya endpoint yang benar adalah `POST /api/u/post` dengan `pid: postId` di body. Endpoint `/u/post/{postId}/comment` → ERR untuk root post. Endpoint `/u/post/{c37pId}/comment` → rc OK tapi mengembalikan ID parent (ghost comment, tidak ada yang dibuat).
 
 ---
 
