@@ -2,7 +2,7 @@
 
 ## Ringkasan Proyek
 
-Bot otomatis Node.js yang berjalan secara paralel di 9 platform: OpenTalk, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, dan AnonChat. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
+Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, AnonChat, dan Bluesky Bot. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
 
 ## Cara Menjalankan
 
@@ -23,6 +23,7 @@ Bot otomatis Node.js yang berjalan secara paralel di 9 platform: OpenTalk, Chati
 | RandomPacar | 3007 | RandomPacar Bot |
 | GETTR | 3008 | GETTR Bot |
 | AnonChat | 3009 | AnonChat Bot |
+| Bluesky  | 3011 | Bluesky Bot  |
 
 ## Environment Variables (Secrets)
 
@@ -36,6 +37,8 @@ Bot otomatis Node.js yang berjalan secara paralel di 9 platform: OpenTalk, Chati
 | `GETTR_USER_ID` | User ID GETTR (numeric, dari profil atau JWT payload) |
 | `GETTR_USERNAME` | Username GETTR (fallback jika tidak pakai TOKEN) |
 | `ANONCHAT_COOKIES` | Cookie AnonChat: `auth_token=...; user_id=...` |
+| `BLUESKY_IDENTIFIER` | Handle Bluesky: `user.bsky.social` atau email akun |
+| `BLUESKY_PASSWORD` | App Password Bluesky (buat di bsky.app → Settings → App Passwords) |
 
 > **Catatan:** `TELEGRAM_SESSION` / `SESSION_SECRET` TIDAK perlu diisi manual.
 > Session tersimpan otomatis ke Replit DB + file `.telegram_session` setelah OTP pertama.
@@ -91,6 +94,13 @@ lib/platforms/
     session.js        ← runCommentSession / runPostSession
     replied-store.js
     sent-log.js
+  bluesky/
+    config.js         ← keywords, reply/post texts, timing, AT Protocol endpoints
+    client.js         ← login + refreshSession + searchPosts + createPost/Reply
+    session.js        ← runReplySession / runPostSession
+    replied-store.js  ← persist AT URI yang sudah di-reply (anti-duplikat)
+    sent-log.js       ← riwayat kiriman in-memory (tampil di dashboard)
+    index.js
 bot/
   opentalk-bot.js
   chatib-bot.js
@@ -101,6 +111,7 @@ bot/
   randompacar-bot.js ← secondary Telegram bot (no auth UI)
   gettr-bot.js       ← GETTR social platform bot (POST + COMMENT)
   anonchat-bot.js    ← AnonChat anonymous chat bot (cookie auth)
+  bluesky-bot.js     ← Bluesky AT Protocol bot (auto-reply + auto-post)
   telegram-auth.js   ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
   start-all.js       ← launcher deployment
 public/

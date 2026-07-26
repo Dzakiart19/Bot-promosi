@@ -50,6 +50,10 @@ args = "GETTR Bot"
 task = "workflow.run"
 args = "AnonChat Bot"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Bluesky Bot"
+
 [[workflows.workflow]]
 name = "OpenTalk Bot"
 author = "agent"
@@ -157,6 +161,18 @@ waitForPort = 3008
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "Bluesky Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=3011 node bot/bluesky-bot.js"
+waitForPort = 3011
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 3000
 externalPort = 80
@@ -233,5 +249,4 @@ GETTR_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyNzg3NTA0MTc4
 GETTR_USER_ID = "278750417826824192"
 X_AUTH_TOKEN = "667cadf4b3339a86bd832a3a62b06f469b464aff"
 X_CT0 = "5b5015d02d84f41d79f47bfbbcb43814e136f7010cb7d9ab93ba13806eecb8241a35d77e4c6abebbdbb04eea7e44c9e89e43ec5ef1a39077069f8db31440d3157c9dede7df5fe9abf13aced6e92bb449"
-THREADS_COOKIES = "ig_did=C68D6EDB-1178-481A-A662-59D844DB8177; dpr=2.0375001430511475; mid=amMkeAABAAEuYMSZRvPe1pi9_MVb; ps_l=1; ps_n=1; ds_user_id=40126635242; csrftoken=D7G8jqNeyVN9LWlANykVfwsCWgCEnlQZ; sessionid=40126635242:DPa9IQ0a6yA1HC:28:AYiPq7K2ZlJVd4RGypmVlOASi0PwbgyrUpd0JLpisw"
 YOUTUBE_COOKIES = "SID=g.a000AwlDLJoEGJ9eWlmlrd-C5f9SpLCe8GN3FDTvX2laMrU7NtCKqrCYEy3z9aoJCZFkQkyCKAACgYKAb8SARASFQHGX2Mi7uIdceReFVu9h9F10lD4dRoVAUF8yKo1INbfK6JXbRnfEeX803jj0076; __Secure-1PSIDTS=sidts-CjQBPWEu2ZX2NnYwymjudmOODJeTKS667unXhIA0uSnJGgn-yUatwgX9NfG6sve7EB9JRq2dEAA; __Secure-3PSIDTS=sidts-CjQBPWEu2ZX2NnYwymjudmOODJeTKS667unXhIA0uSnJGgn-yUatwgX9NfG6sve7EB9JRq2dEAA; __Secure-1PSID=g.a000AwlDLJoEGJ9eWlmlrd-C5f9SpLCe8GN3FDTvX2laMrU7NtCKDkDPhNfiUX1ho6DcsmXYYAACgYKAYMSARASFQHGX2MiRjhJXrptwN91_EA1XQfHRRoVAUF8yKoRuj4NGKRer24Of22wJu6r0076; __Secure-3PSID=g.a000AwlDLJoEGJ9eWlmlrd-C5f9SpLCe8GN3FDTvX2laMrU7NtCKgilfb-vhA2uAVLl170DplAACgYKAT4SARASFQHGX2MiR8wmX0b_8aLsfciJPh_DZhoVAUF8yKpX0KzR54Hfyxg6pqyJAV5v0076; HSID=AVvZJvNGVsITvXSEr; SSID=AlbdDAAbuiuYA-tbd; APISID=7gDAnCHqIJ6EOzmw/A38jaKlX_NN0SdlUW; SAPISID=ASlbmMWM35WuNGiF/AFmp57iCwrcXbT9IV; __Secure-1PAPISID=ASlbmMWM35WuNGiF/AFmp57iCwrcXbT9IV; __Secure-3PAPISID=ASlbmMWM35WuNGiF/AFmp57iCwrcXbT9IV; __Secure-YNID=20.YT=PjcDp8yHu4_65iLnXR_hqDNc2F5oCyzEaPqajqL4y5vrcx-6eZmiDBRLsdOwiAxMBK5xh2PV9o1nZWC9UKZxMfDufZU2Mxqob2rCFR8nYtt2fTMPQ9FUBtlWB5st5lIlj32kG2cOCRioEjIjwzb9wuwu5Px-CxNV5-adUe12HOEtu3WxTyYBley8bfvHjRIieMOWjP97Zv3E7U6aav8YhV2oWbt4JY4PHT3m_5riXI2NahWdu3Ic3xifggcF4t20cc7-6Yg-G6CL_zG3C1pyYnmGJCZI8_R7VQ9FYAwdUG_THXMiij0iLpcFF2ORkzCS1nYd4PBKS_SiGq7V_minEw; VISITOR_INFO1_LIVE=kpmnytnTyAc; VISITOR_PRIVACY_METADATA=CgJJRBIEGgAgDw%3D%3D; __Secure-ROLLOUT_TOKEN=CIPFw-eXgemv8AEQ_eSort7vlQMYwNnRst7vlQM%3D; PREF=f6=40000000&tz=Asia.Jakarta&f7=100; LOGIN_INFO=AFmmF2swRQIhAO3L5Bs-MtvN8XUhWErxvL3ENdOg9vXbYIZwR-pAlGVlAiAIsm7apGFGY_LtIPZ0b53FKh8HR6scl4-v1DM4R-7pAw:QUQ3MjNmd3laV1BmbUd0UjRhZTdaSjBIWl9odHJwaE5vZkVzaEZtUXhlMFc0RHJ3WWM0QjZGdXV6cnBlTzVubnN5WE9FU2lobzlEel9YSGRqU1d3MDNaMnRfRElyd09WaV9Id1J0dHZZbWFXSG9yLUxXWWtTa2Q4OW82bEZvYUZ4Q01iSVhqd1FGa1dDNzJQWUxPWHhoLWtoMVEzYmwwdk53; YSC=MjLXtGZfAWw; CONSISTENCY=AHDYFaFMf5ocpN9XqKfdkwvBuraGjQYR39q-LXL5u4CruPPlht9e-Rr5Mf77MewmMGeOSPTWIU4z2cff2ckifFE; SIDCC=AKEyXzXQV6B_3Rh-7vLIjmLQtDJp42N2O7gwnZ1S8VCml700Xedo89wlCPjZma0slq1C6Z6O; __Secure-1PSIDCC=AKEyXzVijEpOF_1do-11tMGyHU2Q0NMNkX6KskzQP5LwYbBjcjmFk5rT5Qq1lQNepJf6F6JQSw; __Secure-3PSIDCC=AKEyXzVVi3YxHU7GLBYab6nvtgWixSXT5PYgfq3iJD9PH-OrWviuFkECvT8tgT3vBMY5TIyp"
