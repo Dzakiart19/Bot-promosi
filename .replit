@@ -50,10 +50,6 @@ args = "GETTR Bot"
 task = "workflow.run"
 args = "AnonChat Bot"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "YouTube Bot"
-
 [[workflows.workflow]]
 name = "OpenTalk Bot"
 author = "agent"
@@ -157,18 +153,6 @@ author = "agent"
 task = "shell.exec"
 args = "PORT=3008 node bot/gettr-bot.js"
 waitForPort = 3008
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "YouTube Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3010 node bot/youtube-bot.js"
-waitForPort = 3010
 
 [workflows.workflow.metadata]
 outputType = "console"

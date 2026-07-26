@@ -23,7 +23,6 @@ Bot otomatis Node.js yang berjalan secara paralel di 9 platform: OpenTalk, Chati
 | RandomPacar | 3007 | RandomPacar Bot |
 | GETTR | 3008 | GETTR Bot |
 | AnonChat | 3009 | AnonChat Bot |
-| YouTube | 3010 | YouTube Bot |
 
 ## Environment Variables (Secrets)
 
@@ -97,13 +96,13 @@ bot/
   chatib-bot.js
   duckchat-bot.js
   x-bot.js
-  telegram-bot.js   ← main loop + auth/re-auth otomatis
-  temanid-bot.js    ← secondary Telegram bot (no auth UI)
-  randompacar-bot.js← secondary Telegram bot (no auth UI)
-  gettr-bot.js      ← GETTR social platform bot (POST + COMMENT)
-  anonchat-bot.js   ← AnonChat anonymous chat bot (cookie auth)
-  telegram-auth.js  ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
-  start-all.js      ← launcher deployment
+  telegram-bot.js    ← main loop + auth/re-auth otomatis
+  temanid-bot.js     ← secondary Telegram bot (no auth UI)
+  randompacar-bot.js ← secondary Telegram bot (no auth UI)
+  gettr-bot.js       ← GETTR social platform bot (POST + COMMENT)
+  anonchat-bot.js    ← AnonChat anonymous chat bot (cookie auth)
+  telegram-auth.js   ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
+  start-all.js       ← launcher deployment
 public/
   monitor.html      ← dashboard monitor universal (auto-refresh 2 detik)
 ```
