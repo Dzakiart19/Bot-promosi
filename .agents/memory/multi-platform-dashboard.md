@@ -3,7 +3,7 @@ name: Multi-platform bot dashboard architecture
 description: Bagaimana dashboard monitor menampilkan beberapa bot platform sekaligus secara konsisten.
 ---
 
-Setiap bot platform (OpenTalk, Yapping, SillyChat, Chatib, DuckChat, X) berjalan sebagai proses Express terpisah di port sendiri
+Setiap bot platform (OpenTalk, Chatib, DuckChat, X) berjalan sebagai proses Express terpisah di port sendiri
 dengan singleton stats sendiri (lib/core/stats.js) — tidak ada state yang dibagi antar proses secara langsung.
 
 Untuk dashboard yang menampilkan SEMUA platform sekaligus dan konsisten di port mana pun dibuka:

@@ -431,7 +431,6 @@ menyentuh kode dashboard sama sekali:
 // lib/core/platforms-registry.js
 module.exports = [
   { key: "opentalk",  name: "OpenTalk Bot",       port: 8000 },
-  { key: "yapping",   name: "Yapping Bot",        port: 3002 },
   { key: "<nama>",    name: "<NamaPlatform> Bot", port: 3006 /* ganti sesuai Langkah 7 */ },
 ];
 ```

@@ -1,6 +1,6 @@
 # 🤖 Multi-Platform Chat Bot
 
-Bot otomatis Node.js yang berjalan secara paralel di **10 platform** — 5 chat anonim, 3 bot Telegram (1 akun), 1 X (Twitter), 1 GETTR — mengirimkan pesan promosi ke setiap partner atau postingan. Dilengkapi dashboard monitoring terpusat real-time.
+Bot otomatis Node.js yang berjalan secara paralel di **9 platform** — 4 chat anonim, 3 bot Telegram (1 akun), 1 X (Twitter), 1 GETTR — mengirimkan pesan promosi ke setiap partner atau postingan. Dilengkapi dashboard monitoring terpusat real-time.
 
 ---
 
@@ -9,7 +9,6 @@ Bot otomatis Node.js yang berjalan secara paralel di **10 platform** — 5 chat 
 | Platform | URL | Port | File Bot |
 |---|---|---|---|
 | OpenTalk | opentalk.club/text | 8000 | `bot/opentalk-bot.js` |
-| Yapping | yapping.me/chat | 3002 | `bot/yapping-bot.js` |
 | Chatib | app.chatib.chat | 3003 | `bot/chatib-bot.js` |
 | DuckChat | duckchat.club/lake | 3004 | `bot/duckchat-bot.js` |
 | X (comment + reply + post) | x.com | 3005 | `bot/x-bot.js` |
@@ -35,7 +34,6 @@ Tiap bot dijalankan sebagai workflow terpisah di Replit:
 
 ```bash
 PORT=8000 node bot/opentalk-bot.js
-PORT=3002 node bot/yapping-bot.js
 PORT=3003 node bot/chatib-bot.js
 PORT=3004 node bot/duckchat-bot.js
 PORT=3005 node bot/x-bot.js
@@ -109,7 +107,6 @@ Dashboard dapat dibuka dari **port mana pun** — semua bot saling fetch stats v
 ```
 ├── bot/
 │   ├── opentalk-bot.js         # entry point OpenTalk
-│   ├── yapping-bot.js          # entry point Yapping
 │   ├── chatib-bot.js           # entry point Chatib
 │   ├── duckchat-bot.js         # entry point DuckChat
 │   ├── x-bot.js                # entry point X (3 mode: comment/reply/post)
@@ -130,7 +127,6 @@ Dashboard dapat dibuka dari **port mana pun** — semua bot saling fetch stats v
 │   │
 │   └── platforms/
 │       ├── opentalk/           # config · guest · session · index
-│       ├── yapping/
 │       ├── chatib/
 │       ├── duckchat/           # + enkripsi AES-256-CTR
 │       ├── anonchat/           # + cookie auth + AES secret hash
@@ -196,7 +192,7 @@ protokolnya mengekspos negara partner (**OpenTalk** dan **Chatib** saja).
 - **Blocklist** — saat ini **kosong** (semua negara diterima). Isi `BLOCKED_COUNTRIES` di `country-filter.js` untuk memblokir.
 - **Prioritas** — 20 negara ditandai ⭐ di log/dashboard (tanpa skip): AS, Kanada, Inggris, Australia, Singapura, Arab Saudi, Swedia, Finlandia, Swiss, Jerman, Prancis, Belanda, Belgia, Austria, Jepang, UAE, Qatar, Selandia Baru, Denmark, Luksemburg.
 
-Platform yang **tidak bisa difilter** (protokol tidak ekspos negara): Yapping, DuckChat, Telegram, AnonChat, X, GETTR.
+Platform yang **tidak bisa difilter** (protokol tidak ekspos negara): DuckChat, Telegram, AnonChat, X, GETTR.
 
 ---
 

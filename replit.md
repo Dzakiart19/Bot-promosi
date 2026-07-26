@@ -2,7 +2,7 @@
 
 ## Ringkasan Proyek
 
-Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Yapping, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, dan AnonChat. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
+Bot otomatis Node.js yang berjalan secara paralel di 9 platform: OpenTalk, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, dan AnonChat. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
 
 ## Cara Menjalankan
 
@@ -15,7 +15,6 @@ Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Yapp
 | Bot | Port | Workflow Name |
 |---|---|---|
 | OpenTalk | 8000 | OpenTalk Bot |
-| Yapping | 3002 | Yapping Bot |
 | Chatib | 3003 | Chatib Bot |
 | DuckChat | 3004 | DuckChat Bot |
 | X Bot | 3005 | X Bot |
@@ -62,7 +61,6 @@ Jika session expired: monitor otomatis tampilkan form OTP lagi → bot resume ta
 lib/core/           ← infra bersama: logger, stats, Express server, platforms-registry
 lib/platforms/
   opentalk/         ← config + guest + session + index
-  yapping/
   chatib/
   duckchat/
   anonchat/
@@ -95,7 +93,6 @@ lib/platforms/
     sent-log.js
 bot/
   opentalk-bot.js
-  yapping-bot.js
   chatib-bot.js
   duckchat-bot.js
   x-bot.js
@@ -134,14 +131,13 @@ Telegram Bot WAJIB jalan di port 4000 (bukan 3000). Di environment autoscale, `$
 
 ## Detail Per Platform
 
-### Chat Anonim (OpenTalk, Yapping, Chatib, DuckChat, AnonChat)
+### Chat Anonim (OpenTalk, Chatib, DuckChat, AnonChat)
 
 Semua mengikuti pola: `createGuest() → connect WebSocket → join queue → match → kirim sapaan → tunggu balasan → kirim pamit → disconnect → loop`
 
 | Platform | Auth | Enkripsi | Catatan |
 |---|---|---|---|
 | OpenTalk | JWT (anonymous) | Tidak | peerCountry tersedia (filter negara aktif) |
-| Yapping | Cookie (anonymous) | Tidak | ⚠️ Broken sejak ~Juli 2026 — server tidak lagi kirim cookie `token` di response auth |
 | Chatib | Cookie (anonymous) | Tidak | Model lobby (broadcast), bukan 1-on-1 queue; country filter aktif |
 | DuckChat | API token (anonymous) | AES-256-CTR key="secret_key" | Kadang HTTP 504, self-recovering |
 | AnonChat | Cookie (akun login) | AES (secret hash) | Butuh `ANONCHAT_COOKIES`; **Juli 2026:** event match ganti dari `partner-found` → `update-dialog-id` |
@@ -177,7 +173,7 @@ Siklus: POST + COMMENT (masing-masing 1 jam, 5 menit loop).
 Blocklist negara saat ini **kosong** — semua negara partner diterima. Untuk memblokir negara tertentu, isi `BLOCKED_COUNTRIES` di `lib/core/country-filter.js`.
 
 - **OpenTalk & Chatib**: didukung penuh (protokol ekspos negara partner)
-- **Yapping, DuckChat, Telegram, AnonChat, X, GETTR**: tidak bisa difilter (protokol tidak ekspos negara)
+- **DuckChat, Telegram, AnonChat, X, GETTR**: tidak bisa difilter (protokol tidak ekspos negara)
 
 ## Menambah Platform Baru
 

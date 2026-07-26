@@ -20,10 +20,6 @@ args = "OpenTalk Bot"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Yapping Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Chatib Bot"
 
 [[workflows.workflow.tasks]]
@@ -65,18 +61,6 @@ waitForPort = 8000
 
 [workflows.workflow.metadata]
 outputType = "console"
-
-[[workflows.workflow]]
-name = "Yapping Bot"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3002 node bot/yapping-bot.js"
-waitForPort = 3002
 
 [[workflows.workflow]]
 name = "Chatib Bot"
