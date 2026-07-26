@@ -5,7 +5,7 @@
  * socket/match, cuma siklus search-keyword → reply satu tweet → sleep 1 menit.
  * Semua logika platform ada di lib/platforms/x/.
  *
- *   PORT=6000 node bot/x-bot.js
+ *   PORT=3005 node bot/x-bot.js
  * ─────────────────────────────────────────────────────────────────────────────
  */
 

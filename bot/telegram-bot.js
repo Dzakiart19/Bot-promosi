@@ -11,7 +11,7 @@
  *   5. Session tersimpan otomatis ke Replit DB — persist walau deploy ulang / autoscale
  *
  * Jalankan:
- *   PORT=3000 node bot/telegram-bot.js
+ *   PORT=4000 node bot/telegram-bot.js
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
