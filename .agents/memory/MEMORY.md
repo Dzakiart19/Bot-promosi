@@ -1,0 +1,4 @@
+- [AnonChat match protocol](anonchat-match-protocol.md) — event partner-found diganti update-dialog-id per Juli 2026
+- [GETTR thread-reply strategy](gettr-thread-reply.md) — comment ke root post gagal; harus reply ke komentar c37p... di dalam thread
+- [Yapping auth broken](yapping-auth-broken.md) — server tidak lagi kirim cookie token di response; bot loop error terus
+- [Telegram shared session rules](telegram-shared-session.md) — 3 bot, 1 akun; TemanID & RandomPacar wajib authProxy:false

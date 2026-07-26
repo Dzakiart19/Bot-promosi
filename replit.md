@@ -141,10 +141,10 @@ Semua mengikuti pola: `createGuest() → connect WebSocket → join queue → ma
 | Platform | Auth | Enkripsi | Catatan |
 |---|---|---|---|
 | OpenTalk | JWT (anonymous) | Tidak | peerCountry tersedia (filter negara aktif) |
-| Yapping | Cookie (anonymous) | Tidak | Fallback ke SAFE msg jika LINK_NOT_ALLOWED |
+| Yapping | Cookie (anonymous) | Tidak | ⚠️ Broken sejak ~Juli 2026 — server tidak lagi kirim cookie `token` di response auth |
 | Chatib | Cookie (anonymous) | Tidak | Model lobby (broadcast), bukan 1-on-1 queue; country filter aktif |
-| DuckChat | API token (anonymous) | AES-256-CTR key="secret_key" | |
-| AnonChat | Cookie (akun login) | AES (secret hash) | Butuh `ANONCHAT_COOKIES` |
+| DuckChat | API token (anonymous) | AES-256-CTR key="secret_key" | Kadang HTTP 504, self-recovering |
+| AnonChat | Cookie (akun login) | AES (secret hash) | Butuh `ANONCHAT_COOKIES`; **Juli 2026:** event match ganti dari `partner-found` → `update-dialog-id` |
 
 ### Telegram (3 bot, 1 akun)
 
@@ -164,6 +164,7 @@ Siklus: COMMENT → REPLY → POST (masing-masing 1 jam interval, 5 menit loop).
 Siklus: POST + COMMENT (masing-masing 1 jam, 5 menit loop).
 - Pakai `GETTR_TOKEN` + `GETTR_USER_ID` untuk bypass Imperva (lebih andal dari login)
 - JSON body: field `txt`, bukan `rich_txt`; `_t:'cmt'` wajib untuk comment
+- **Strategi thread-reply (Juli 2026):** endpoint `/u/post/{id}/comment` hanya berhasil jika target berformat `c37p...` (comment), bukan `p426...` (root post). Bot fetch komentar pertama dari target post, reply ke komentar itu → hasilnya sub-reply dalam thread asli. Fallback ke profile-reply jika fetch gagal.
 
 ---
 
