@@ -55,6 +55,7 @@ BOT_FILES=(
   "bot/randompacar-bot.js"
   "bot/gettr-bot.js"
   "bot/anonchat-bot.js"
+  "bot/youtube-bot.js"
   "bot/start-all.js"
   "public/monitor.html"
 )
@@ -92,6 +93,7 @@ echo -e "    ${YELLOW}PORT=3006 node bot/temanid-bot.js${NC}      (TemanID,     
 echo -e "    ${YELLOW}PORT=3007 node bot/randompacar-bot.js${NC}  (RandomPacar, port 3007)"
 echo -e "    ${YELLOW}PORT=3008 node bot/gettr-bot.js${NC}        (GETTR,       port 3008)"
 echo -e "    ${YELLOW}PORT=3009 node bot/anonchat-bot.js${NC}     (AnonChat,    port 3009)"
+echo -e "    ${YELLOW}PORT=3010 node bot/youtube-bot.js${NC}     (YouTube,     port 3010)"
 echo ""
 echo -e "  ${CYAN}Health check: ${YELLOW}http://localhost:<port>/health${NC}"
 echo ""
