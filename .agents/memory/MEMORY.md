@@ -11,3 +11,4 @@
 - [Telegram auth proxy rule](telegram-auth-proxy-rule.md) — temanid-bot & randompacar-bot WAJIB startServer(name, { authProxy: false }) — tanpa ini dashboard 3006/3007 tampilkan OTP UI dan user kira perlu login sendiri.
 - [Telegram Bot port conflict in production](telegram-port-conflict.md) — telegram-bot WAJIB di port 4000; $PORT=3000 di autoscale (externalPort=80), aggregator claim duluan → conflict → logout HTML error.
 - [GETTR API comment format](gettr-api-comment-format.md) — JSON body bukan FormData; field txt bukan rich_txt; _t:'cmt' wajib; user=userId di x-app-auth.
+- [GETTR search API limitation](gettr-search-api-limitation.md) — search/srchposts tidak berfungsi server-side; pakai trending+filter blocked_accounts sebagai workaround; comment tampil di Replies via field pid.
