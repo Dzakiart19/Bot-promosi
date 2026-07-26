@@ -2,7 +2,7 @@
 
 ## Ringkasan Proyek
 
-Bot otomatis Node.js yang berjalan secara paralel di 11 platform: OpenTalk, Yapping, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, AnonChat, dan Threads Bot. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
+Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Yapping, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, dan AnonChat. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
 
 ## Cara Menjalankan
 
@@ -24,7 +24,6 @@ Bot otomatis Node.js yang berjalan secara paralel di 11 platform: OpenTalk, Yapp
 | RandomPacar | 3007 | RandomPacar Bot |
 | GETTR | 3008 | GETTR Bot |
 | AnonChat | 3009 | AnonChat Bot |
-| Threads | 3010 | Threads Bot |
 
 ## Environment Variables (Secrets)
 
@@ -38,7 +37,6 @@ Bot otomatis Node.js yang berjalan secara paralel di 11 platform: OpenTalk, Yapp
 | `GETTR_USER_ID` | User ID GETTR (numeric, dari profil atau JWT payload) |
 | `GETTR_USERNAME` | Username GETTR (fallback jika tidak pakai TOKEN) |
 | `ANONCHAT_COOKIES` | Cookie AnonChat: `auth_token=...; user_id=...` |
-| `THREADS_COOKIES` | Cookie Threads: `sessionid=...; csrftoken=...` — wajib untuk Threads Bot |
 
 > **Catatan:** `TELEGRAM_SESSION` / `SESSION_SECRET` TIDAK perlu diisi manual.
 > Session tersimpan otomatis ke Replit DB + file `.telegram_session` setelah OTP pertama.
@@ -57,18 +55,6 @@ Session tersimpan di **Replit DB** — tidak hilang walau:
 - Autoscale hibernasi lalu bangun lagi
 
 Jika session expired: monitor otomatis tampilkan form OTP lagi → bot resume tanpa restart.
-
-## Autentikasi Threads Bot
-
-1. Buka **threads.com** di browser → login ke akun
-2. Buka DevTools → **Application** → **Cookies** → `threads.com`
-3. Copy nilai cookie `sessionid` dan `csrftoken`
-4. Set Secrets: `THREADS_COOKIES = "sessionid=<val>; csrftoken=<val>"`
-5. Start workflow **Threads Bot** — bot langsung verify dan mulai posting
-
-Jika session expired (biasanya setelah beberapa bulan):
-- Log akan menampilkan: `Session Threads tidak valid / expired`
-- Ulangi langkah 1–5 dengan session baru
 
 ## Arsitektur
 
@@ -107,14 +93,6 @@ lib/platforms/
     session.js        ← runCommentSession / runPostSession
     replied-store.js
     sent-log.js
-  threads/            ← ← ← BARU: Threads (threads.com)
-    config.js         ← keywords, comment/post texts, doc_id fallback, timing
-    client.js         ← GraphQL client (LSD token auto-extract + doc_id discovery)
-    guest.js          ← verifikasi THREADS_COOKIES
-    session.js        ← runCommentSession / runPostSession
-    replied-store.js  ← persist ID thread yang sudah dikomentari
-    sent-log.js       ← riwayat kiriman in-memory
-    index.js
 bot/
   opentalk-bot.js
   yapping-bot.js
@@ -126,7 +104,6 @@ bot/
   randompacar-bot.js← secondary Telegram bot (no auth UI)
   gettr-bot.js      ← GETTR social platform bot (POST + COMMENT)
   anonchat-bot.js   ← AnonChat anonymous chat bot (cookie auth)
-  threads-bot.js    ← ← ← BARU: Threads bot (POST + COMMENT)
   telegram-auth.js  ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
   start-all.js      ← launcher deployment
 public/
@@ -188,14 +165,6 @@ Siklus: POST + COMMENT (masing-masing 1 jam, 5 menit loop).
 - Pakai `GETTR_TOKEN` + `GETTR_USER_ID` untuk bypass Imperva (lebih andal dari login)
 - JSON body: field `txt`, bukan `rich_txt`; `_t:'cmt'` wajib untuk comment
 
-### Threads Bot (port 3010) — BARU
-
-Siklus: POST + COMMENT (POST 1 jam, COMMENT tiap 5 menit).
-- Pakai cookie `sessionid` + `csrftoken` dari browser Threads
-- LSD token di-extract otomatis dari HTML (`__eqmc` script tag) setiap startup
-- GraphQL doc_id di-discover dari JS bundle CDN; fallback ke nilai hardcoded di config.js
-- Jika log menampilkan `"Query not found"` → doc_id sudah berubah, update `DOC_ID_FALLBACK` di `lib/platforms/threads/config.js`
-
 ---
 
 ## Negara Prioritas
@@ -207,7 +176,7 @@ Siklus: POST + COMMENT (POST 1 jam, COMMENT tiap 5 menit).
 Blocklist negara saat ini **kosong** — semua negara partner diterima. Untuk memblokir negara tertentu, isi `BLOCKED_COUNTRIES` di `lib/core/country-filter.js`.
 
 - **OpenTalk & Chatib**: didukung penuh (protokol ekspos negara partner)
-- **Yapping, DuckChat, Telegram, AnonChat, X, GETTR, Threads**: tidak bisa difilter (protokol tidak ekspos negara)
+- **Yapping, DuckChat, Telegram, AnonChat, X, GETTR**: tidak bisa difilter (protokol tidak ekspos negara)
 
 ## Menambah Platform Baru
 
