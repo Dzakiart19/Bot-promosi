@@ -23,6 +23,7 @@ Bot otomatis Node.js yang berjalan secara paralel di 9 platform: OpenTalk, Chati
 | RandomPacar | 3007 | RandomPacar Bot |
 | GETTR | 3008 | GETTR Bot |
 | AnonChat | 3009 | AnonChat Bot |
+| YouTube | 3010 | YouTube Bot |
 
 ## Environment Variables (Secrets)
 
