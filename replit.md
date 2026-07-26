@@ -2,7 +2,7 @@
 
 ## Ringkasan Proyek
 
-Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, AnonChat, dan Bluesky Bot. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
+Bot otomatis Node.js yang berjalan secara paralel di 11 platform: OpenTalk, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, AnonChat, Bluesky Bot, dan Quora Bot. Setiap bot berjalan sebagai proses terpisah pada port berbeda, dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
 
 ## Cara Menjalankan
 
@@ -24,6 +24,7 @@ Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Chat
 | GETTR | 3008 | GETTR Bot |
 | AnonChat | 3009 | AnonChat Bot |
 | Bluesky  | 3011 | Bluesky Bot  |
+| Quora    | 3012 | Quora Bot    |
 
 ## Environment Variables (Secrets)
 
@@ -39,6 +40,7 @@ Bot otomatis Node.js yang berjalan secara paralel di 10 platform: OpenTalk, Chat
 | `ANONCHAT_COOKIES` | Cookie AnonChat: `auth_token=...; user_id=...` |
 | `BLUESKY_IDENTIFIER` | Handle Bluesky: `user.bsky.social` atau email akun |
 | `BLUESKY_PASSWORD` | App Password Bluesky (buat di bsky.app → Settings → App Passwords) |
+| `QUORA_COOKIES` | Cookie sesi Quora dari browser: DevTools → Application → Cookies → quora.com → copy semua |
 
 > **Catatan:** `TELEGRAM_SESSION` / `SESSION_SECRET` TIDAK perlu diisi manual.
 > Session tersimpan otomatis ke Replit DB + file `.telegram_session` setelah OTP pertama.
@@ -101,6 +103,13 @@ lib/platforms/
     replied-store.js  ← persist AT URI yang sudah di-reply (anti-duplikat)
     sent-log.js       ← riwayat kiriman in-memory (tampil di dashboard)
     index.js
+  quora/
+    config.js         ← keywords, answer texts, timing
+    client.js         ← getFormkey + searchQuestions + getQuestionId + postAnswer
+    session.js        ← runAnswerSession (search → fetch qid → post jawaban)
+    replied-store.js  ← persist slug pertanyaan yang sudah dijawab
+    sent-log.js       ← riwayat kiriman in-memory
+    index.js
 bot/
   opentalk-bot.js
   chatib-bot.js
@@ -112,6 +121,7 @@ bot/
   gettr-bot.js       ← GETTR social platform bot (POST + COMMENT)
   anonchat-bot.js    ← AnonChat anonymous chat bot (cookie auth)
   bluesky-bot.js     ← Bluesky AT Protocol bot (auto-reply + auto-post)
+  quora-bot.js       ← Quora auto-answer bot (cookie-based, tiap 5 menit)
   telegram-auth.js   ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
   start-all.js       ← launcher deployment
 public/
