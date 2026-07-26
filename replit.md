@@ -154,6 +154,7 @@ Siklus: COMMENT → REPLY → POST (masing-masing 1 jam interval, 5 menit loop).
 - GraphQL queryId di-discover otomatis dari main.js bundle
 - `x-client-transaction-id` wajib (tanpa ini X tolak dengan 404)
 - `.replied-ids.json` cegah duplikat reply/comment
+- **Hashtag pool:** `HASHTAG_POOL` (31 tag niche adult) di `config.js` — tiap kiriman ditempel 8 hashtag acak via `pickHashtags()` di `session.js`
 
 ### GETTR Bot (port 3008)
 
@@ -182,7 +183,6 @@ Blocklist negara saat ini **kosong** — semua negara partner diterima. Untuk me
 3. Tambah baris ke `lib/core/platforms-registry.js`
 4. Buat workflow baru di Replit
 5. Restart **SEMUA** workflow (bukan hanya yang baru) — karena `platforms-registry.js` di-cache in-process
-6. Tambah entry ke array `BOT_FILES` di `install.sh`
 
 ## Menambah Telegram Bot Sekunder Baru
 

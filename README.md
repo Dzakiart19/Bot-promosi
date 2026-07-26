@@ -208,7 +208,7 @@ Platform yang **tidak bisa difilter** (protokol tidak ekspos negara): DuckChat, 
 
 - Auth: `GETTR_TOKEN` + `GETTR_USER_ID` (JWT langsung, bypass Imperva)
 - JSON body comment: field `txt`, bukan `rich_txt`; `_t:'cmt'` wajib
-- **Strategi comment (Juli 2026):** untuk reply yang masuk thread asli (bukan tab Replies profil), bot fetch komentar pertama dari target post (`c37p...`), lalu reply ke komentar itu — hasilnya sub-reply yang tampil dalam thread. Fallback ke profile-reply jika fetch gagal.
+- **Strategi comment (confirmed live test Juli 2026):** satu-satunya endpoint yang benar adalah `POST /api/u/post` dengan `pid: postId` di body. Endpoint `/u/post/{postId}/comment` → ERR untuk root post. Endpoint `/u/post/{c37pId}/comment` → rc OK tapi mengembalikan ID parent (ghost comment, tidak ada yang dibuat). Bot tidak lagi menggunakan `fetchFirstComment`.
 
 ### X Bot
 
@@ -224,6 +224,7 @@ Siklus: COMMENT → REPLY → POST (masing-masing 1 jam interval, 5 menit loop).
 - `x-client-transaction-id` wajib di setiap request GraphQL
 - `HomeTimeline` tidak tersedia tanpa browser runtime — COMMENT pakai `SearchTimeline`
 - `.replied-ids.json` cegah duplikat reply/comment lintas restart
+- **Hashtag pool:** `HASHTAG_POOL` di `config.js` berisi 31 hashtag (niche adult). Setiap kiriman REPLY, COMMENT, dan POST ditempel 8 hashtag acak dari pool via `pickHashtags()` di `session.js` — kombinasi berbeda tiap kiriman.
 
 ### DuckChat
 
@@ -253,7 +254,7 @@ Pesan dienkripsi: **AES-256-CTR**, key = SHA-256 dari `"secret_key"` (hardcoded 
   "socket.io-client":         "^4.x",
   "node-fetch":               "^3.x",
   "ws":                       "^8.x",
-  "uuid":                     "^11.x",
+  "uuid":                     "^14.x",
   "crypto-js":                "^4.x",
   "x-client-transaction-id":  "latest",
   "telegram":                 "^2.x"
