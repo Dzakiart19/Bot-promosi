@@ -2,7 +2,7 @@
 
 ## Ringkasan Proyek
 
-Bot otomatis Node.js yang berjalan secara paralel di **11 platform**: OpenTalk, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, AnonChat, Bluesky Bot, dan PornHub Bot. Semua bot berjalan dalam **2 workflow** — satu "All Bots" launcher dan satu "Telegram Bot" terpisah — dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
+Bot otomatis Node.js yang berjalan secara paralel di **10 platform**: OpenTalk, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, AnonChat, dan PornHub Bot. Semua bot berjalan dalam **2 workflow** — satu "All Bots" launcher dan satu "Telegram Bot" terpisah — dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
 
 ## Cara Menjalankan
 
@@ -14,8 +14,8 @@ Bot otomatis Node.js yang berjalan secara paralel di **11 platform**: OpenTalk, 
 
 | Workflow | Command | Keterangan |
 |---|---|---|
-| **All Bots** | `node launchers/all-bots.js` | Jalankan 10 bot non-Telegram sekaligus (port 8000 adalah primary) |
-| **Telegram Bot** | `PORT=4000 node bot/telegram-bot.js` | Terpisah karena butuh OTP UI + shared session |
+| **All Bots** | `node launchers/all-bots.js` | Jalankan 9 bot non-Telegram sekaligus (port 8000 adalah primary) |
+| **Telegram Bot** | `PORT=4000 node bot/telegram-bot.js` | Terpisah karena butuh OTP UI + shared session untuk TemanID/RandomPacar |
 
 ## Ports & Bot
 
@@ -30,7 +30,6 @@ Bot otomatis Node.js yang berjalan secara paralel di **11 platform**: OpenTalk, 
 | RandomPacar | 3007 | @random_pacar_bot |
 | GETTR | 3008 | gettr.com (auto-post + comment) |
 | AnonChat | 3009 | alpha.anonchat.com/search |
-| Bluesky | 3011 | bsky.app (AT Protocol) |
 | PornHub | 3013 | pornhub.com (auto-comment) |
 
 ## Environment Variables
@@ -45,8 +44,6 @@ Bot otomatis Node.js yang berjalan secara paralel di **11 platform**: OpenTalk, 
 | `GETTR_USER_ID` | User ID GETTR (numeric) |
 | `GETTR_USERNAME` | Username GETTR |
 | `ANONCHAT_COOKIES` | Cookie AnonChat: `auth_token=...; user_id=...` |
-| `BLUESKY_IDENTIFIER` | Handle Bluesky atau email |
-| `BLUESKY_PASSWORD` | App Password Bluesky |
 | `PORNHUB_COOKIES` | Cookie session PornHub (dari browser DevTools) |
 | `PORNHUB_USER_ID` | User ID PornHub (nilai header `__m`) |
 
@@ -97,13 +94,6 @@ lib/platforms/
     session.js            ← runCommentSession / runPostSession
     replied-store.js
     sent-log.js
-  bluesky/
-    config.js             ← keywords, reply/post texts, AT Protocol endpoints
-    client.js             ← login + refreshSession + searchPosts + createPost/Reply
-    session.js            ← runReplySession / runPostSession
-    replied-store.js
-    sent-log.js
-    index.js
   pornhub/
     config.js             ← keywords, comment texts, timing, endpoints
     client.js             ← verifySession + searchVideos + fetchVideoDetail + postComment
@@ -121,12 +111,11 @@ bot/
   randompacar-bot.js     ← secondary Telegram bot (no auth UI)
   gettr-bot.js           ← GETTR social platform bot (POST + COMMENT)
   anonchat-bot.js        ← AnonChat anonymous chat bot (cookie auth)
-  bluesky-bot.js         ← Bluesky AT Protocol bot (auto-reply + auto-post)
   pornhub-bot.js         ← PornHub auto-comment bot (cookie auth, REST + HTML scraping)
   telegram-auth.js       ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
   start-all.js           ← launcher untuk deployment
 launchers/
-  all-bots.js            ← launcher tunggal semua bot non-Telegram (10 bot, 1 workflow)
+  all-bots.js            ← launcher tunggal semua bot non-Telegram (9 bot, 1 workflow)
 public/
   monitor.html           ← dashboard monitor universal (auto-refresh 5 detik)
 ```
@@ -203,12 +192,6 @@ Siklus: COMMENT saja — search video → ambil detail (video_id + XSRF token) �
 - Endpoint comment: `POST /api/v1/comment/add` dengan `token`, `video_id`, `comment`
 - Cookies perlu diupdate manual jika session expired (salin ulang dari browser DevTools)
 
-### Bluesky Bot (port 3011)
-
-Siklus: REPLY + POST (AT Protocol).
-- Login via `BLUESKY_IDENTIFIER` + `BLUESKY_PASSWORD`
-- Jika akun di-suspend → bot masuk error state, perlu akun baru
-
 ---
 
 ## Negara Prioritas
@@ -220,7 +203,7 @@ Siklus: REPLY + POST (AT Protocol).
 Blocklist negara saat ini **kosong** — semua negara partner diterima.
 
 - **OpenTalk & Chatib**: didukung penuh (protokol ekspos negara partner)
-- **DuckChat, Telegram, AnonChat, X, GETTR, PornHub, Bluesky**: tidak bisa difilter
+- **DuckChat, Telegram, AnonChat, X, GETTR, PornHub**: tidak bisa difilter
 
 ## Menambah Platform Baru
 

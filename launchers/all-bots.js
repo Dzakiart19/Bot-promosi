@@ -29,7 +29,6 @@ const BOTS = [
   { name: "RandomPacar", script: "bot/randompacar-bot.js", port: 3007  },
   { name: "GETTR",       script: "bot/gettr-bot.js",       port: 3008  },
   { name: "AnonChat",    script: "bot/anonchat-bot.js",    port: 3009  },
-  { name: "Bluesky",     script: "bot/bluesky-bot.js",     port: 3011  },
   { name: "PornHub",     script: "bot/pornhub-bot.js",     port: 3013  },
 ];
 
