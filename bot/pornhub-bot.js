@@ -37,7 +37,7 @@ console.log("  ██████╔╝ ███████║");
 console.log("  ██╔═══╝  ██╔══██║");
 console.log("  ██║      ██║  ██║");
 console.log("  ╚═╝      ╚═╝  ╚═╝");
-console.log(`${C.reset}${C.cyan}  Platform : pornhub.org (auto-comment)${C.reset}`);
+console.log(`${C.reset}${C.cyan}  Platform : pornhub.com (auto-comment)${C.reset}`);
 console.log();
 
 // ── Main loop ─────────────────────────────────────────────────────────────────

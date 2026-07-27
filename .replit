@@ -16,88 +16,19 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "OpenTalk Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Chatib Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "DuckChat Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "X Bot"
+args = "All Bots"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Telegram Bot"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "TemanID Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "RandomPacar Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "GETTR Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "AnonChat Bot"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Bluesky Bot"
-
 [[workflows.workflow]]
-name = "OpenTalk Bot"
+name = "All Bots"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=8000 node bot/opentalk-bot.js"
-waitForPort = 8000
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "Chatib Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3003 node bot/chatib-bot.js"
-waitForPort = 3003
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "DuckChat Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3004 node bot/duckchat-bot.js"
-waitForPort = 3004
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "X Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3005 node bot/x-bot.js"
-waitForPort = 3005
+args = "node launchers/all-bots.js"
 
 [workflows.workflow.metadata]
 outputType = "console"
@@ -110,65 +41,6 @@ author = "agent"
 task = "shell.exec"
 args = "PORT=4000 node bot/telegram-bot.js"
 waitForPort = 4000
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "TemanID Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3006 node bot/temanid-bot.js"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "RandomPacar Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3007 node bot/randompacar-bot.js"
-waitForPort = 3007
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "AnonChat Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3009 node bot/anonchat-bot.js"
-waitForPort = 3009
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "GETTR Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3008 node bot/gettr-bot.js"
-waitForPort = 3008
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "Bluesky Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3011 node bot/bluesky-bot.js"
-waitForPort = 3011
 
 [workflows.workflow.metadata]
 outputType = "console"
@@ -220,6 +92,10 @@ externalPort = 6000
 [[ports]]
 localPort = 3012
 externalPort = 3002
+
+[[ports]]
+localPort = 3013
+externalPort = 6800
 
 [[ports]]
 localPort = 4000
