@@ -110,7 +110,17 @@ async function main() {
         stats.status       = "error";
         stats.lastErrorMsg = "Cookies expired — update PORNHUB_COOKIES";
         await sleep(30 * 60 * 1000);
-        // Coba lanjut — mungkin env var sudah diupdate
+        stats.status = "idle";
+      }
+
+      // CAPTCHA score — session terflag akibat banyak request gagal.
+      // Cooldown 45 menit agar flag server hilang, lalu coba lagi otomatis.
+      if (reason === "captcha-cooldown") {
+        log("WARN", "[PH] CAPTCHA score rendah — bot cooldown 45 menit lalu retry otomatis");
+        pushEvent("warn", "CAPTCHA score — cooldown 45 menit");
+        stats.status       = "cooldown";
+        stats.lastErrorMsg = "CAPTCHA score — cooldown aktif";
+        await sleep(45 * 60 * 1000);
         stats.status = "idle";
       }
 
