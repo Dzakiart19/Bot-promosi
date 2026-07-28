@@ -91,13 +91,6 @@ lib/platforms/
     session.js            ← runCommentSession / runPostSession
     replied-store.js
     sent-log.js
-  pornhub/
-    config.js             ← keywords, comment texts, timing, endpoints
-    client.js             ← verifySession + searchVideos + fetchVideoDetail + postComment
-    session.js            ← runCommentSession (search → detail → comment loop)
-    replied-store.js      ← persist viewkey/video_id yang sudah dikomentari
-    sent-log.js           ← riwayat komentar in-memory
-    index.js
 bot/
   opentalk-bot.js
   chatib-bot.js
@@ -108,7 +101,6 @@ bot/
   randompacar-bot.js     ← secondary Telegram bot (no auth UI)
   gettr-bot.js           ← GETTR social platform bot (POST + COMMENT)
   anonchat-bot.js        ← AnonChat anonymous chat bot (cookie auth)
-  pornhub-bot.js         ← PornHub auto-comment bot (cookie auth, REST + HTML scraping)
   telegram-auth.js       ← FALLBACK MANUAL (jalankan di shell, bukan workflow)
   start-all.js           ← launcher untuk deployment
 launchers/
@@ -180,15 +172,6 @@ Siklus: POST + COMMENT (masing-masing 1 jam, 5 menit loop).
 - JSON body: field `txt`, bukan `rich_txt`; `_t:'cmt'` wajib untuk comment
 - Satu-satunya endpoint comment yang benar: `POST /api/u/post` dengan `pid: postId` di body
 
-### PornHub Bot (port 3013)
-
-Siklus: COMMENT saja — search video → ambil detail (video_id + XSRF token) → post komentar → sleep 5 menit.
-- Auth: cookie dari browser (`PORNHUB_COOKIES` env var) + user ID (`PORNHUB_USER_ID` = header `__m`)
-- XSRF token harus fresh per sesi — di-extract dari HTML `id="xsrfToken"` tiap video
-- Cookie dimodifikasi otomatis: `platform=mobile` → `platform=pc` untuk request search
-- Endpoint comment: `POST /api/v1/comment/add` dengan `token`, `video_id`, `comment`
-- Cookies perlu diupdate manual jika session expired (salin ulang dari browser DevTools)
-
 ---
 
 ## Negara Prioritas
@@ -200,7 +183,7 @@ Siklus: COMMENT saja — search video → ambil detail (video_id + XSRF token) �
 Blocklist negara saat ini **kosong** — semua negara partner diterima.
 
 - **OpenTalk & Chatib**: didukung penuh (protokol ekspos negara partner)
-- **DuckChat, Telegram, AnonChat, X, GETTR, PornHub**: tidak bisa difilter
+- **DuckChat, Telegram, AnonChat, X, GETTR**: tidak bisa difilter
 
 ## Menambah Platform Baru
 
