@@ -2,7 +2,7 @@
 
 ## Ringkasan Proyek
 
-Bot otomatis Node.js yang berjalan secara paralel di **10 platform**: OpenTalk, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, AnonChat, dan PornHub Bot. Semua bot berjalan dalam **2 workflow** — satu "All Bots" launcher dan satu "Telegram Bot" terpisah — dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
+Bot otomatis Node.js yang berjalan secara paralel di **9 platform**: OpenTalk, Chatib, DuckChat (chat anonim), X Bot (Twitter), 3 Telegram Bot (1 akun, 3 target bot), GETTR Bot, dan AnonChat. Semua bot berjalan dalam **2 workflow** — satu "All Bots" launcher dan satu "Telegram Bot" terpisah — dengan shared infra (logger, stats, Express server, dashboard monitor) di `lib/core/`.
 
 ## Cara Menjalankan
 
@@ -30,7 +30,6 @@ Bot otomatis Node.js yang berjalan secara paralel di **10 platform**: OpenTalk, 
 | RandomPacar | 3007 | @random_pacar_bot |
 | GETTR | 3008 | gettr.com (auto-post + comment) |
 | AnonChat | 3009 | alpha.anonchat.com/search |
-| PornHub | 3013 | pornhub.com (auto-comment) |
 
 ## Environment Variables
 
@@ -44,8 +43,6 @@ Bot otomatis Node.js yang berjalan secara paralel di **10 platform**: OpenTalk, 
 | `GETTR_USER_ID` | User ID GETTR (numeric) |
 | `GETTR_USERNAME` | Username GETTR |
 | `ANONCHAT_COOKIES` | Cookie AnonChat: `auth_token=...; user_id=...` |
-| `PORNHUB_COOKIES` | Cookie session PornHub (dari browser DevTools) |
-| `PORNHUB_USER_ID` | User ID PornHub (nilai header `__m`) |
 
 > **Catatan:** `TELEGRAM_SESSION` / `SESSION_SECRET` TIDAK perlu diisi manual.
 > Session tersimpan otomatis ke Replit DB + file `.telegram_session` setelah OTP pertama.
