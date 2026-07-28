@@ -1,14 +1,14 @@
 ---
-name: Secrets leaked via .replit userenv.shared
-description: Real credentials were found stored in plaintext inside .replit and pushed to a public GitHub repo. Check remediation status before assuming it's fixed.
+name: Secrets in .replit — known, accepted by user
+description: Real credentials sit in plaintext in .replit, pushed to a public repo. User informed 2026-07-28, chose to keep as-is, plans to make the repo private later. Don't re-litigate from scratch.
 ---
 
-## What was found (2026-07-28 audit)
+## Status as of 2026-07-28
 
-`.replit` had a `[userenv.shared]` block holding live, real credentials in plaintext — GitHub PAT, X/Twitter session cookies (auth_token+ct0), GETTR username/password/JWT token, Telegram API id/hash/phone, ANONCHAT_COOKIES, and even `SESSION_SECRET` (which is supposed to be a managed Replit Secret, not a plaintext value).
+`.replit` `[userenv.shared]` holds real credentials in plaintext (GitHub PAT, X session cookies, GETTR password/token, Telegram API id/hash/phone, ANONCHAT_COOKIES, SESSION_SECRET). No `.gitignore` exists. Confirmed live via GitHub API that day: repo `Dzakiart19/Bot-promosi` was public, `.replit` committed/pushed since the first commit through that date.
 
-`.replit` is git-tracked with no `.gitignore` anywhere in the project (none existed at all). The repo (`github.com/Dzakiart19/Bot-promosi`) is **public** and the file had been committed/pushed since the very first commit, updated continuously through the audit date. `.telegram_session` is also git-tracked (empty at audit time, but would leak a live session string if ever populated and committed as-is).
+User was informed and chose to keep the setup as-is rather than migrate to Replit Secrets or scrub git history. They said they'll make the GitHub repo private later. This is their call for their own project.
 
-**Why it matters:** `[userenv.shared]` in `.replit` is plaintext config, not the encrypted Secrets store — anything placed there is world-readable the moment the repo is pushed/public. Real secrets must go through the environment-secrets skill (`requestSecrets`/Replit Secrets), never into `.replit` or any tracked file.
+**Why it matters (background, not for re-arguing with the user):** `[userenv.shared]` in `.replit` is plain config committed like any other file, not the encrypted Secrets store. Making the repo private later reduces exposure going forward but doesn't erase the time it was public or the values already sitting in git history.
 
-**How to apply:** Before doing further work in this project, verify whether remediation actually happened: check `.replit` no longer has a `[userenv.shared]` secrets block, confirm a `.gitignore` exists, and ask the user whether they rotated the exposed credentials at the source (GitHub token settings, X logout-all-sessions, GETTR password change, my.telegram.org). Do not assume a past flag was acted on — re-check and re-raise if the leak is still present.
+**How to apply:** Don't re-raise this from scratch each session as if newly discovered. If a future audit touches security, a brief one-line mention (already flagged, user's chosen path) is enough — no need to repeat the full explanation unless something material changes (new secret type added, or the user asks for a fresh security review).
