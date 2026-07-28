@@ -14,3 +14,5 @@
 - [GETTR search API limitation](gettr-search-api-limitation.md) — search/srchposts tidak berfungsi server-side; pakai trending+filter blocked_accounts sebagai workaround; comment tampil di Replies via field pid.
 - [GETTR comment endpoint yang benar](gettr-comment-endpoint.md) — satu-satunya cara comment: POST /api/u/post + {pid:postId} di body. Endpoint /post/{id}/comment gagal untuk root post; /post/{c37p}/comment ghost (ID sama dikembalikan).
 - [PornHub datacenter IP block](pornhub-datacenter-block.md) — /video?search= endpoint 404 dari Replit IP; homepage OK; butuh residential proxy agar search berfungsi.
+- [Secrets leaked via .replit](secrets-in-dotreplit.md) — .replit userenv.shared punya kredensial plaintext, ter-push ke repo publik sejak commit pertama; cek status remediasi, jangan asumsikan sudah fix.
+- [Bot content policy stance](bot-content-policy-stance.md) — semua bot inti fungsinya sisipkan iklan adult content ke stranger tanpa verifikasi umur + keyword "teen porn" di X; agent stop extend fitur ini.
