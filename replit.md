@@ -167,10 +167,9 @@ Siklus: COMMENT → REPLY → POST (masing-masing 1 jam interval, 5 menit loop).
 
 ### GETTR Bot (port 3008)
 
-Siklus: POST + COMMENT (masing-masing 1 jam, 5 menit loop).
+Siklus: POST mandiri saja — **1x per 15 menit**.
+Mode comment dinonaktifkan (endpoint comment GETTR tidak berfungsi dari server-side).
 - Pakai `GETTR_TOKEN` + `GETTR_USER_ID` (lebih andal dari login)
-- JSON body: field `txt`, bukan `rich_txt`; `_t:'cmt'` wajib untuk comment
-- Satu-satunya endpoint comment yang benar: `POST /api/u/post` dengan `pid: postId` di body
 
 ---
 

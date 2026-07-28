@@ -1,8 +1,9 @@
 /**
  * bot/gettr-bot.js
  * ─────────────────────────────────────────────────────────────────────────────
- * Entry point bot GETTR. Siklus: login → trending → comment promo → sleep.
- * Auto-post mandiri setiap 1 jam. Tidak ada socket/match.
+ * Entry point bot GETTR. Siklus: login → post mandiri tiap 15 menit.
+ * Mode comment dinonaktifkan — endpoint comment GETTR tidak berfungsi
+ * dari server-side (kemungkinan proteksi anti-bot dari sisi platform).
  *
  *   PORT=3008 node bot/gettr-bot.js
  * ─────────────────────────────────────────────────────────────────────────────
@@ -13,7 +14,7 @@
 const { startServer }            = require("../lib/core/server");
 const { log, sleep, C }          = require("../lib/core/logger");
 const { stats, pushEvent }       = require("../lib/core/stats");
-const { config, login, runCommentSession, runPostSession } = require("../lib/platforms/gettr");
+const { config, login, runPostSession } = require("../lib/platforms/gettr");
 const { log: sentLogStore }      = require("../lib/platforms/gettr/sent-log");
 
 // ── Start web server ──────────────────────────────────────────────────────────
@@ -54,70 +55,37 @@ async function main() {
     configurable: true,
   });
 
-  // Seperti X Bot: masing-masing mode punya timer sendiri, loop 5 menit cek giliran.
-  // COMMENT dan POST masing-masing 1x per jam. Priority: POST > COMMENT.
-  // Init ke (now - interval) supaya siklus pertama langsung eksekusi keduanya.
-  let lastPostAt    = Date.now() - config.POST_INTERVAL_MS;
-  let lastCommentAt = Date.now() - config.COMMENT_INTERVAL_MS;
+  // POST-only: tiap 15 menit kirim satu post mandiri.
+  // Init ke (now - interval) supaya siklus pertama langsung eksekusi.
+  let lastPostAt = Date.now() - config.POST_INTERVAL_MS;
 
   while (true) {
-    const now       = Date.now();
-    const doPost    = (now - lastPostAt    >= config.POST_INTERVAL_MS);
-    const doComment = (now - lastCommentAt >= config.COMMENT_INTERVAL_MS);
+    const now    = Date.now();
+    const doPost = (now - lastPostAt >= config.POST_INTERVAL_MS);
 
-    if (!doPost && !doComment) {
-      // Tidak ada giliran — tunggu sampai siklus berikutnya
-      const nextPost    = config.POST_INTERVAL_MS    - (now - lastPostAt);
-      const nextComment = config.COMMENT_INTERVAL_MS - (now - lastCommentAt);
-      const waitMs      = Math.min(nextPost, nextComment, config.LOOP_DELAY_MS);
+    if (!doPost) {
+      const nextPost = config.POST_INTERVAL_MS - (now - lastPostAt);
       stats.status = "idle";
-      log("INFO", `Idle — comment dalam ${Math.ceil(nextComment/60000)}m, post dalam ${Math.ceil(nextPost/60000)}m`);
-      await sleep(waitMs);
+      log("INFO", `Idle — post berikutnya dalam ${Math.ceil(nextPost / 60000)}m`);
+      await sleep(Math.min(nextPost, config.LOOP_DELAY_MS));
       continue;
     }
-
-    // Pilih mode: POST punya prioritas lebih tinggi dari COMMENT
-    const mode = doPost ? "POST" : "COMMENT";
 
     stats.totalSessions++;
     stats.currentSession = stats.totalSessions;
 
     log("INFO", "━".repeat(54));
-    log("INFO", `  SIKLUS #${stats.totalSessions}  [${mode}]  |  Sent: ${stats.totalMsgSent}  Error: ${stats.totalErrors}`);
+    log("INFO", `  SIKLUS #${stats.totalSessions}  [POST]  |  Sent: ${stats.totalMsgSent}  Error: ${stats.totalErrors}`);
     log("INFO", "━".repeat(54));
 
     try {
-      let reason;
+      const reason = await runPostSession(session);
+      lastPostAt   = Date.now();
 
-      if (doPost) {
-        reason     = await runPostSession(session);
-        lastPostAt = Date.now();
-      } else {
-        reason        = await runCommentSession(session);
-        lastCommentAt = Date.now();
-      }
-
-      log("INFO", `Siklus #${stats.totalSessions} [${mode}] selesai → "${reason}"`);
-      pushEvent("end_session", `Siklus #${stats.totalSessions} [${mode}]: ${reason}`);
-
-      // Re-login kalau token expired / banned
-      if (reason === "banned") {
-        log("WARN", "[GETTR] Akun banned — coba re-login dalam 30 menit...");
-        pushEvent("warn", "Akun banned — tunggu 30 menit lalu re-login");
-        stats.status = "idle";
-        await sleep(30 * 60 * 1000);
-        try {
-          session = await login();
-          log("SUCCESS", "Re-login GETTR berhasil");
-          pushEvent("info", "Re-login GETTR berhasil");
-        } catch (e) {
-          log("ERROR", `Re-login gagal: ${e.message}`);
-          stats.lastErrorMsg = e.message;
-        }
-        continue;
-      }
+      log("INFO", `Siklus #${stats.totalSessions} [POST] selesai → "${reason}"`);
+      pushEvent("end_session", `Siklus #${stats.totalSessions} [POST]: ${reason}`);
     } catch (err) {
-      log("ERROR", `Siklus #${stats.totalSessions} [${mode}] error: ${err.message}`);
+      log("ERROR", `Siklus #${stats.totalSessions} [POST] error: ${err.message}`);
       stats.totalErrors++;
       stats.lastErrorAt  = Date.now();
       stats.lastErrorMsg = err.message;
@@ -135,7 +103,6 @@ async function main() {
       }
     }
 
-    // Langsung cek lagi (tanpa delay) — mungkin masih ada mode lain yang giliran
     await sleep(1000);
   }
 }
